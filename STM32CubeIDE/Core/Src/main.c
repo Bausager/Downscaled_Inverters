@@ -68,7 +68,8 @@ float RADIAL_SPEED = (Hz_Out * PI2) / f_sw;
 float angle = 0;
 float PWM1, PWM2, PWM3;
 float val1, val2, val3, val4, val5, val6, val7;
-float Mi = 0.5;
+float Mi = 0.8;
+uint8_t TIM2_falg = 0;
 
 /* USER CODE END PV */
 
@@ -347,6 +348,66 @@ HAL_TIM_Base_Start_IT(&htim2);
 
   while (1)
   {
+if (TIM2_falg) {
+
+
+
+	ADC_Selector(1, 10);
+	ADC_Selector(2, 12);
+	ADC_Selector(3, 0);
+
+	// Start ADC Conversion
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_Start(&hadc2);
+	HAL_ADC_Start(&hadc3);
+
+	// Poll ADC1 Perihperal & TimeOut = 1Sec
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	HAL_ADC_PollForConversion(&hadc2, 1000);
+	HAL_ADC_PollForConversion(&hadc3, 1000);
+
+	// Read The ADC Conversion Result & Map It To PWM DutyCycle
+	val1 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
+	val3 =((double)HAL_ADC_GetValue(&hadc2) / 4095.0f) * 3.3f;
+	val5 =((double)HAL_ADC_GetValue(&hadc3) / 4095.0f) * 3.3f;
+
+	ADC_Selector(1, 11);
+	ADC_Selector(2, 13);
+	ADC_Selector(3, 1);
+
+	// Start ADC Conversion
+	HAL_ADC_Start(&hadc1);
+	HAL_ADC_Start(&hadc2);
+	HAL_ADC_Start(&hadc3);
+
+	// Poll ADC1 Perihperal & TimeOut = 1Sec
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+	HAL_ADC_PollForConversion(&hadc2, 1000);
+	HAL_ADC_PollForConversion(&hadc3, 1000);
+
+	// Read The ADC Conversion Result & Map It To PWM DutyCycle
+	val2 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
+	val4 =((double)HAL_ADC_GetValue(&hadc2) / 4095.0f) * 3.3f;
+	val6 =((double)HAL_ADC_GetValue(&hadc3) / 4095.0f) * 3.3f;
+
+
+
+	ADC_Selector(1, 4);
+
+	// Start ADC Conversion
+	HAL_ADC_Start(&hadc1);
+
+	// Poll ADC1 Perihperal & TimeOut = 1Sec
+	HAL_ADC_PollForConversion(&hadc1, 1000);
+
+	// Read The ADC Conversion Result & Map It To PWM DutyCycle
+	val7 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
+
+	char outputBuffer[256];
+	uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "val1: %f. val2: %f. val3: %f. val4: %f. val5: %f. val6: %f. val7: %f. \r\n", val1, val2, val3 ,val4, val5, val6, val7);
+	HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
+	TIM2_falg = 0;
+}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -816,68 +877,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 	}
 
 	if(htim->Instance==TIM2){
+		TIM2_falg = 1;
 
-
-
-
-		ADC_Selector(1, 10);
-		ADC_Selector(2, 12);
-		ADC_Selector(3, 0);
-
-		// Start ADC Conversion
-		HAL_ADC_Start(&hadc1);
-		HAL_ADC_Start(&hadc2);
-		HAL_ADC_Start(&hadc3);
-
-		// Poll ADC1 Perihperal & TimeOut = 1Sec
-		HAL_ADC_PollForConversion(&hadc1, 1000);
-		HAL_ADC_PollForConversion(&hadc2, 1000);
-		HAL_ADC_PollForConversion(&hadc3, 1000);
-
-		// Read The ADC Conversion Result & Map It To PWM DutyCycle
-		val1 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
-		val3 =((double)HAL_ADC_GetValue(&hadc2) / 4095.0f) * 3.3f;
-		val5 =((double)HAL_ADC_GetValue(&hadc3) / 4095.0f) * 3.3f;
-
-		ADC_Selector(1, 11);
-		ADC_Selector(2, 13);
-		ADC_Selector(3, 1);
-
-		// Start ADC Conversion
-		HAL_ADC_Start(&hadc1);
-		HAL_ADC_Start(&hadc2);
-		HAL_ADC_Start(&hadc3);
-
-		// Poll ADC1 Perihperal & TimeOut = 1Sec
-		HAL_ADC_PollForConversion(&hadc1, 1000);
-		HAL_ADC_PollForConversion(&hadc2, 1000);
-		HAL_ADC_PollForConversion(&hadc3, 1000);
-
-		// Read The ADC Conversion Result & Map It To PWM DutyCycle
-		val2 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
-		val4 =((double)HAL_ADC_GetValue(&hadc2) / 4095.0f) * 3.3f;
-		val6 =((double)HAL_ADC_GetValue(&hadc3) / 4095.0f) * 3.3f;
-
-
-
-		ADC_Selector(1, 4);
-
-		// Start ADC Conversion
-		HAL_ADC_Start(&hadc1);
-
-		// Poll ADC1 Perihperal & TimeOut = 1Sec
-		HAL_ADC_PollForConversion(&hadc1, 1000);
-
-		// Read The ADC Conversion Result & Map It To PWM DutyCycle
-		val7 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
-
-		char outputBuffer[256];
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "val1: %f. val2: %f. val3: %f. val4: %f. val5: %f. val6: %f. val7: %f. \r\n", val1, val2, val3 ,val4, val5, val6, val7);
-		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
-
-		//Uac += ((0.01905f*(double)HAL_ADC_GetValue(&hadc2)) - 24.64222f - 0.31f) / 1000.0f;
-		//Ubc += ((0.01309f*(double)HAL_ADC_GetValue(&hadc3)) - 18.62311f - 0.02f) / 1000.0f;
-		//writeValueToUART(angle);
 	}
 	else{
 	}
