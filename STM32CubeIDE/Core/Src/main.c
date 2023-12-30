@@ -18,10 +18,14 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "fatfs.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "TimerConfig.h"
+#include "Inverter.h"
+
+#include "HelperFunc.h"
 
 //#include <math.h>
 #include <string.h> // sprintf
@@ -49,13 +53,23 @@ ADC_HandleTypeDef hadc1;
 ADC_HandleTypeDef hadc2;
 ADC_HandleTypeDef hadc3;
 
+SPI_HandleTypeDef hspi3;
+
 TIM_HandleTypeDef htim1;
+TIM_HandleTypeDef htim2;
 
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
-float Hz = 1;
-float value = 0;
+const float f_sw = 20e3;
+const float Hz_Out = 50;
+float RADIAL_SPEED = (Hz_Out * PI2) / f_sw;
+
+float angle = 0;
+float PWM1, PWM2, PWM3;
+float val1, val2, val3, val4, val5, val6, val7;
+float Mi = 0.5;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -66,6 +80,8 @@ static void MX_TIM1_Init(void);
 static void MX_ADC1_Init(void);
 static void MX_ADC2_Init(void);
 static void MX_ADC3_Init(void);
+static void MX_TIM2_Init(void);
+static void MX_SPI3_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -79,32 +95,113 @@ void writeValueToUART(double value){
 }
 
 
-void ADC_Selector(uint8_t ADC_number, uint8_t Channal){
+
+
+uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	ADC_ChannelConfTypeDef sConfig = {0};
 	sConfig.Rank = 1;
 	sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
 	if(ADC_number == 1){
-		if(Channal == 4){
+		if(Channal == 0){
+			sConfig.Channel = ADC_CHANNEL_0;
+		}
+		else if(Channal == 1){
+			sConfig.Channel = ADC_CHANNEL_1;
+		}
+		else if(Channal == 2){
+			sConfig.Channel = ADC_CHANNEL_2;
+		}
+		else if(Channal == 3){
+			sConfig.Channel = ADC_CHANNEL_3;
+		}
+		else if(Channal == 4){
 			sConfig.Channel = ADC_CHANNEL_4;
+		}
+		else if(Channal == 5){
+			sConfig.Channel = ADC_CHANNEL_5;
+		}
+		else if(Channal == 6){
+			sConfig.Channel = ADC_CHANNEL_6;
+		}
+		else if(Channal == 7){
+			sConfig.Channel = ADC_CHANNEL_7;
+		}
+		else if(Channal == 8){
+			sConfig.Channel = ADC_CHANNEL_8;
+		}
+		else if(Channal == 9){
+			sConfig.Channel = ADC_CHANNEL_9;
 		}
 		else if(Channal == 10){
 			sConfig.Channel = ADC_CHANNEL_10;
-
 		}
 		else if(Channal == 11){
 			sConfig.Channel = ADC_CHANNEL_11;
+		}
+		else if(Channal == 12){
+			sConfig.Channel = ADC_CHANNEL_12;
+		}
+		else if(Channal == 13){
+			sConfig.Channel = ADC_CHANNEL_13;
+		}
+		else if(Channal == 14){
+			sConfig.Channel = ADC_CHANNEL_14;
+		}
+		else if(Channal == 15){
+			sConfig.Channel = ADC_CHANNEL_15;
 		}
 		if(HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK){
 			Error_Handler();
 		}
 	}
 	else if(ADC_number == 2){
-		if(Channal == 12){
+		if(Channal == 0){
+			sConfig.Channel = ADC_CHANNEL_0;
+		}
+		else if(Channal == 1){
+			sConfig.Channel = ADC_CHANNEL_1;
+		}
+		else if(Channal == 2){
+			sConfig.Channel = ADC_CHANNEL_2;
+		}
+		else if(Channal == 3){
+			sConfig.Channel = ADC_CHANNEL_3;
+		}
+		else if(Channal == 4){
+			sConfig.Channel = ADC_CHANNEL_4;
+		}
+		else if(Channal == 5){
+			sConfig.Channel = ADC_CHANNEL_5;
+		}
+		else if(Channal == 6){
+			sConfig.Channel = ADC_CHANNEL_6;
+		}
+		else if(Channal == 7){
+			sConfig.Channel = ADC_CHANNEL_7;
+		}
+		else if(Channal == 8){
+			sConfig.Channel = ADC_CHANNEL_8;
+		}
+		else if(Channal == 9){
+			sConfig.Channel = ADC_CHANNEL_9;
+		}
+		else if(Channal == 10){
+			sConfig.Channel = ADC_CHANNEL_10;
+		}
+		else if(Channal == 11){
+			sConfig.Channel = ADC_CHANNEL_11;
+		}
+		else if(Channal == 12){
 			sConfig.Channel = ADC_CHANNEL_12;
-
 		}
 		else if(Channal == 13){
 			sConfig.Channel = ADC_CHANNEL_13;
+		}
+		else if(Channal == 14){
+			sConfig.Channel = ADC_CHANNEL_14;
+		}
+		else if(Channal == 15){
+			sConfig.Channel = ADC_CHANNEL_15;
 		}
 		if(HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK){
 			Error_Handler();
@@ -113,19 +210,58 @@ void ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	else if(ADC_number == 3){
 		if(Channal == 0){
 			sConfig.Channel = ADC_CHANNEL_0;
-
 		}
 		else if(Channal == 1){
 			sConfig.Channel = ADC_CHANNEL_1;
+		}
+		else if(Channal == 2){
+			sConfig.Channel = ADC_CHANNEL_2;
+		}
+		else if(Channal == 3){
+			sConfig.Channel = ADC_CHANNEL_3;
+		}
+		else if(Channal == 4){
+			sConfig.Channel = ADC_CHANNEL_4;
+		}
+		else if(Channal == 5){
+			sConfig.Channel = ADC_CHANNEL_5;
+		}
+		else if(Channal == 6){
+			sConfig.Channel = ADC_CHANNEL_6;
+		}
+		else if(Channal == 7){
+			sConfig.Channel = ADC_CHANNEL_7;
+		}
+		else if(Channal == 8){
+			sConfig.Channel = ADC_CHANNEL_8;
+		}
+		else if(Channal == 9){
+			sConfig.Channel = ADC_CHANNEL_9;
+		}
+		else if(Channal == 10){
+			sConfig.Channel = ADC_CHANNEL_10;
+		}
+		else if(Channal == 11){
+			sConfig.Channel = ADC_CHANNEL_11;
+		}
+		else if(Channal == 12){
+			sConfig.Channel = ADC_CHANNEL_12;
+		}
+		else if(Channal == 13){
+			sConfig.Channel = ADC_CHANNEL_13;
+		}
+		else if(Channal == 14){
+			sConfig.Channel = ADC_CHANNEL_14;
+		}
+		else if(Channal == 15){
+			sConfig.Channel = ADC_CHANNEL_15;
 		}
 		if(HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK){
 			Error_Handler();
 		}
 	}
-
+	return HAL_OK;
 }
-
-
 
 
 /* USER CODE END 0 */
@@ -163,6 +299,9 @@ int main(void)
   MX_ADC1_Init();
   MX_ADC2_Init();
   MX_ADC3_Init();
+  MX_TIM2_Init();
+  MX_SPI3_Init();
+  MX_FATFS_Init();
   /* USER CODE BEGIN 2 */
 
 HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
@@ -173,22 +312,39 @@ HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 
 
-TIM_freq(1, Hz);
-
-HAL_TIM_Base_Start_IT(&htim1);
-//HAL_TIM_Base_Start_IT(&htim2);
-
-
-
-
+//TIM_freq(1, f_sw);
 //writeValueToUART(TIM1->PSC);
 //writeValueToUART(TIM1->ARR);
-//TIM1->PSC = 1;
-//TIM1->ARR = 2099;
+
+// TIM1 - 20 kHz
+TIM1->PSC = 1;
+TIM1->ARR = 2099;
+// TIM1 - 1 Hz
+//TIM1->PSC = 1343;
+//TIM1->ARR = 62499;
+
+
+//TIM_freq(2, 1.0f);
+//writeValueToUART(TIM2->PSC);
+//writeValueToUART(TIM2->ARR);
+
+// TIM2 - 1 Hz
+TIM2->PSC = 1;
+TIM2->ARR = 41999998;
+
+
+svm_block_init(TIM1->ARR, f_sw);
+
+HAL_TIM_Base_Start_IT(&htim1);
+HAL_TIM_Base_Start_IT(&htim2);
+
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
+
   while (1)
   {
     /* USER CODE END WHILE */
@@ -284,9 +440,9 @@ static void MX_ADC1_Init(void)
 
   /** Configure for the selected ADC regular channel its corresponding rank in the sequencer and its sample time.
   */
-  sConfig.Channel = ADC_CHANNEL_4;
+  sConfig.Channel = ADC_CHANNEL_10;
   sConfig.Rank = 1;
-  sConfig.SamplingTime = ADC_SAMPLETIME_3CYCLES;
+  sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
   if (HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK)
   {
     Error_Handler();
@@ -402,6 +558,44 @@ static void MX_ADC3_Init(void)
 }
 
 /**
+  * @brief SPI3 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_SPI3_Init(void)
+{
+
+  /* USER CODE BEGIN SPI3_Init 0 */
+
+  /* USER CODE END SPI3_Init 0 */
+
+  /* USER CODE BEGIN SPI3_Init 1 */
+
+  /* USER CODE END SPI3_Init 1 */
+  /* SPI3 parameter configuration*/
+  hspi3.Instance = SPI3;
+  hspi3.Init.Mode = SPI_MODE_MASTER;
+  hspi3.Init.Direction = SPI_DIRECTION_2LINES;
+  hspi3.Init.DataSize = SPI_DATASIZE_8BIT;
+  hspi3.Init.CLKPolarity = SPI_POLARITY_LOW;
+  hspi3.Init.CLKPhase = SPI_PHASE_1EDGE;
+  hspi3.Init.NSS = SPI_NSS_SOFT;
+  hspi3.Init.BaudRatePrescaler = SPI_BAUDRATEPRESCALER_4;
+  hspi3.Init.FirstBit = SPI_FIRSTBIT_MSB;
+  hspi3.Init.TIMode = SPI_TIMODE_DISABLE;
+  hspi3.Init.CRCCalculation = SPI_CRCCALCULATION_DISABLE;
+  hspi3.Init.CRCPolynomial = 10;
+  if (HAL_SPI_Init(&hspi3) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN SPI3_Init 2 */
+
+  /* USER CODE END SPI3_Init 2 */
+
+}
+
+/**
   * @brief TIM1 Initialization Function
   * @param None
   * @retval None
@@ -450,7 +644,7 @@ static void MX_TIM1_Init(void)
   sConfigOC.OCMode = TIM_OCMODE_TOGGLE;
   sConfigOC.Pulse = 0;
   sConfigOC.OCPolarity = TIM_OCPOLARITY_HIGH;
-  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_LOW;
+  sConfigOC.OCNPolarity = TIM_OCNPOLARITY_HIGH;
   sConfigOC.OCFastMode = TIM_OCFAST_DISABLE;
   sConfigOC.OCIdleState = TIM_OCIDLESTATE_RESET;
   sConfigOC.OCNIdleState = TIM_OCNIDLESTATE_RESET;
@@ -472,7 +666,7 @@ static void MX_TIM1_Init(void)
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 255;
+  sBreakDeadTimeConfig.DeadTime = 125;
   sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
   sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
   sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
@@ -484,6 +678,51 @@ static void MX_TIM1_Init(void)
 
   /* USER CODE END TIM1_Init 2 */
   HAL_TIM_MspPostInit(&htim1);
+
+}
+
+/**
+  * @brief TIM2 Initialization Function
+  * @param None
+  * @retval None
+  */
+static void MX_TIM2_Init(void)
+{
+
+  /* USER CODE BEGIN TIM2_Init 0 */
+
+  /* USER CODE END TIM2_Init 0 */
+
+  TIM_ClockConfigTypeDef sClockSourceConfig = {0};
+  TIM_MasterConfigTypeDef sMasterConfig = {0};
+
+  /* USER CODE BEGIN TIM2_Init 1 */
+
+  /* USER CODE END TIM2_Init 1 */
+  htim2.Instance = TIM2;
+  htim2.Init.Prescaler = 0;
+  htim2.Init.CounterMode = TIM_COUNTERMODE_UP;
+  htim2.Init.Period = 4294967295;
+  htim2.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
+  htim2.Init.AutoReloadPreload = TIM_AUTORELOAD_PRELOAD_DISABLE;
+  if (HAL_TIM_Base_Init(&htim2) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sClockSourceConfig.ClockSource = TIM_CLOCKSOURCE_INTERNAL;
+  if (HAL_TIM_ConfigClockSource(&htim2, &sClockSourceConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
+  sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
+  if (HAL_TIMEx_MasterConfigSynchronization(&htim2, &sMasterConfig) != HAL_OK)
+  {
+    Error_Handler();
+  }
+  /* USER CODE BEGIN TIM2_Init 2 */
+
+  /* USER CODE END TIM2_Init 2 */
 
 }
 
@@ -528,6 +767,8 @@ static void MX_USART2_UART_Init(void)
 static void MX_GPIO_Init(void)
 {
   GPIO_InitTypeDef GPIO_InitStruct = {0};
+/* USER CODE BEGIN MX_GPIO_Init_1 */
+/* USER CODE END MX_GPIO_Init_1 */
 
   /* GPIO Ports Clock Enable */
   __HAL_RCC_GPIOC_CLK_ENABLE();
@@ -551,23 +792,97 @@ static void MX_GPIO_Init(void)
   GPIO_InitStruct.Speed = GPIO_SPEED_FREQ_LOW;
   HAL_GPIO_Init(LD2_GPIO_Port, &GPIO_InitStruct);
 
+/* USER CODE BEGIN MX_GPIO_Init_2 */
+/* USER CODE END MX_GPIO_Init_2 */
 }
 
 /* USER CODE BEGIN 4 */
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
-	//writeValueToUART(218);
+
 	if(htim->Instance==TIM1){
-		writeValueToUART(value);
-		value+=1;
-	}
+		//writeValueToUART(1);
+		angle = angle + RADIAL_SPEED;
+	    if (angle > 6.2831853072f){
+	    	angle = angle - 6.2831853072f;
+	    }
+	    svm_block(Mi, angle, &PWM1, &PWM2, &PWM3);
 
+
+	    TIM1->CCR1 = PWM1;
+	    TIM1->CCR2 = PWM2;
+	    TIM1->CCR3 = PWM3;
+	}
 	else{
-
 	}
+
+	if(htim->Instance==TIM2){
+
+
+
+
+		ADC_Selector(1, 10);
+		ADC_Selector(2, 12);
+		ADC_Selector(3, 0);
+
+		// Start ADC Conversion
+		HAL_ADC_Start(&hadc1);
+		HAL_ADC_Start(&hadc2);
+		HAL_ADC_Start(&hadc3);
+
+		// Poll ADC1 Perihperal & TimeOut = 1Sec
+		HAL_ADC_PollForConversion(&hadc1, 1000);
+		HAL_ADC_PollForConversion(&hadc2, 1000);
+		HAL_ADC_PollForConversion(&hadc3, 1000);
+
+		// Read The ADC Conversion Result & Map It To PWM DutyCycle
+		val1 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
+		val3 =((double)HAL_ADC_GetValue(&hadc2) / 4095.0f) * 3.3f;
+		val5 =((double)HAL_ADC_GetValue(&hadc3) / 4095.0f) * 3.3f;
+
+		ADC_Selector(1, 11);
+		ADC_Selector(2, 13);
+		ADC_Selector(3, 1);
+
+		// Start ADC Conversion
+		HAL_ADC_Start(&hadc1);
+		HAL_ADC_Start(&hadc2);
+		HAL_ADC_Start(&hadc3);
+
+		// Poll ADC1 Perihperal & TimeOut = 1Sec
+		HAL_ADC_PollForConversion(&hadc1, 1000);
+		HAL_ADC_PollForConversion(&hadc2, 1000);
+		HAL_ADC_PollForConversion(&hadc3, 1000);
+
+		// Read The ADC Conversion Result & Map It To PWM DutyCycle
+		val2 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
+		val4 =((double)HAL_ADC_GetValue(&hadc2) / 4095.0f) * 3.3f;
+		val6 =((double)HAL_ADC_GetValue(&hadc3) / 4095.0f) * 3.3f;
+
+
+
+		ADC_Selector(1, 4);
+
+		// Start ADC Conversion
+		HAL_ADC_Start(&hadc1);
+
+		// Poll ADC1 Perihperal & TimeOut = 1Sec
+		HAL_ADC_PollForConversion(&hadc1, 1000);
+
+		// Read The ADC Conversion Result & Map It To PWM DutyCycle
+		val7 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
+
+		char outputBuffer[256];
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "val1: %f. val2: %f. val3: %f. val4: %f. val5: %f. val6: %f. val7: %f. \r\n", val1, val2, val3 ,val4, val5, val6, val7);
+		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
+
+		//Uac += ((0.01905f*(double)HAL_ADC_GetValue(&hadc2)) - 24.64222f - 0.31f) / 1000.0f;
+		//Ubc += ((0.01309f*(double)HAL_ADC_GetValue(&hadc3)) - 18.62311f - 0.02f) / 1000.0f;
+		//writeValueToUART(angle);
+	}
+	else{
+	}
+
 }
-
-
-
 
 
 /* USER CODE END 4 */
@@ -580,7 +895,13 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
+
   __disable_irq();
+
+	char ErrorBuffer[256];
+	uint8_t ErrorLen = snprintf(ErrorBuffer, sizeof(ErrorBuffer), "\r\n Error! Stuck in Error_Handler! \r\n");
+	HAL_UART_Transmit(&huart2, (uint8_t *)ErrorBuffer, ErrorLen, 100);
+
   while (1)
   {
   }
