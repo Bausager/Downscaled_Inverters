@@ -4,6 +4,9 @@
 #metadata
 .metadata/
 
+.zip
+
+
 #Debug
 Debug/
 debug/
