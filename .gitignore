@@ -4,7 +4,9 @@
 #metadata
 .metadata/
 
+# Using wildcards
 *.zip
+*.pdf
 
 
 #Debug
