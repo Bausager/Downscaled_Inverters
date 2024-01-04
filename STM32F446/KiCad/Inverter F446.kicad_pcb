@@ -8021,7 +8021,7 @@
     (property "ki_keywords" "screw terminal")
     (path "/590cc5d8-7f74-4de4-81fe-c177d696b0bc")
     (attr through_hole)
-    (fp_text reference "J2" (at 5.05 -4.65 90) (layer "F.SilkS")
+    (fp_text reference "J2" (at -2.119204 -4.810439 90) (layer "F.SilkS")
         (effects (font (size 1 1) (thickness 0.15)))
       (tstamp e1e39c67-bd38-4fe5-bbca-eae340933543)
     )
@@ -8866,6 +8866,12 @@
 
   (gr_rect (start 12.7 12.7) (end 152.4 129.54)
     (stroke (width 0.1) (type default)) (fill none) (layer "Edge.Cuts") (tstamp 51e763f4-8afa-4d01-9c89-a7293d376ccf))
+  (gr_text "Ph3, Ph2, Ph1" (at 142.24 30.48 90) (layer "F.SilkS") (tstamp 4bd1d39c-f8e3-4f7b-9812-5d30adcb300b)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
+  )
+  (gr_text "5V, GND" (at 22.105535 17.226695 -90) (layer "F.SilkS") (tstamp e700c839-dbbb-44a2-9a02-581166388f9b)
+    (effects (font (size 1 1) (thickness 0.15)) (justify left bottom))
+  )
 
   (segment (start 106.679999 27.914127) (end 108.240136 27.914127) (width 0.5) (layer "B.Cu") (net 1) (tstamp 5429219e-35c3-4433-bc9a-7b9cfe1c0967))
   (segment (start 99.856666 17.724127) (end 99.906666 17.774127) (width 0.5) (layer "B.Cu") (net 1) (tstamp 644aabf1-47ea-43c0-bedc-cfd58113c9eb))
