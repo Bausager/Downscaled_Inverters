@@ -23,7 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "TimerConfig.h"
 #include "Inverter.h"
-
+#include "ADCMeas.h"
 
 
 //#include <math.h>
@@ -66,9 +66,9 @@ float RADIAL_SPEED = (Hz_Out * PI2) / f_sw;
 float angle = 0;
 float PWM1, PWM2, PWM3;
 float val1, val2, val3, val4, val5, val6, val7;
-float Mi = 0.8;
+float Mi = 0.80;
+uint8_t TIM1_falg = 0;
 uint8_t TIM2_falg = 0;
-
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -93,173 +93,6 @@ void writeValueToUART(double value){
 }
 
 
-
-
-uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
-	ADC_ChannelConfTypeDef sConfig = {0};
-	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
-	if(ADC_number == 1){
-		if(Channal == 0){
-			sConfig.Channel = ADC_CHANNEL_0;
-		}
-		else if(Channal == 1){
-			sConfig.Channel = ADC_CHANNEL_1;
-		}
-		else if(Channal == 2){
-			sConfig.Channel = ADC_CHANNEL_2;
-		}
-		else if(Channal == 3){
-			sConfig.Channel = ADC_CHANNEL_3;
-		}
-		else if(Channal == 4){
-			sConfig.Channel = ADC_CHANNEL_4;
-		}
-		else if(Channal == 5){
-			sConfig.Channel = ADC_CHANNEL_5;
-		}
-		else if(Channal == 6){
-			sConfig.Channel = ADC_CHANNEL_6;
-		}
-		else if(Channal == 7){
-			sConfig.Channel = ADC_CHANNEL_7;
-		}
-		else if(Channal == 8){
-			sConfig.Channel = ADC_CHANNEL_8;
-		}
-		else if(Channal == 9){
-			sConfig.Channel = ADC_CHANNEL_9;
-		}
-		else if(Channal == 10){
-			sConfig.Channel = ADC_CHANNEL_10;
-		}
-		else if(Channal == 11){
-			sConfig.Channel = ADC_CHANNEL_11;
-		}
-		else if(Channal == 12){
-			sConfig.Channel = ADC_CHANNEL_12;
-		}
-		else if(Channal == 13){
-			sConfig.Channel = ADC_CHANNEL_13;
-		}
-		else if(Channal == 14){
-			sConfig.Channel = ADC_CHANNEL_14;
-		}
-		else if(Channal == 15){
-			sConfig.Channel = ADC_CHANNEL_15;
-		}
-		if(HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK){
-			Error_Handler();
-		}
-	}
-	else if(ADC_number == 2){
-		if(Channal == 0){
-			sConfig.Channel = ADC_CHANNEL_0;
-		}
-		else if(Channal == 1){
-			sConfig.Channel = ADC_CHANNEL_1;
-		}
-		else if(Channal == 2){
-			sConfig.Channel = ADC_CHANNEL_2;
-		}
-		else if(Channal == 3){
-			sConfig.Channel = ADC_CHANNEL_3;
-		}
-		else if(Channal == 4){
-			sConfig.Channel = ADC_CHANNEL_4;
-		}
-		else if(Channal == 5){
-			sConfig.Channel = ADC_CHANNEL_5;
-		}
-		else if(Channal == 6){
-			sConfig.Channel = ADC_CHANNEL_6;
-		}
-		else if(Channal == 7){
-			sConfig.Channel = ADC_CHANNEL_7;
-		}
-		else if(Channal == 8){
-			sConfig.Channel = ADC_CHANNEL_8;
-		}
-		else if(Channal == 9){
-			sConfig.Channel = ADC_CHANNEL_9;
-		}
-		else if(Channal == 10){
-			sConfig.Channel = ADC_CHANNEL_10;
-		}
-		else if(Channal == 11){
-			sConfig.Channel = ADC_CHANNEL_11;
-		}
-		else if(Channal == 12){
-			sConfig.Channel = ADC_CHANNEL_12;
-		}
-		else if(Channal == 13){
-			sConfig.Channel = ADC_CHANNEL_13;
-		}
-		else if(Channal == 14){
-			sConfig.Channel = ADC_CHANNEL_14;
-		}
-		else if(Channal == 15){
-			sConfig.Channel = ADC_CHANNEL_15;
-		}
-		if(HAL_ADC_ConfigChannel(&hadc2, &sConfig) != HAL_OK){
-			Error_Handler();
-		}
-	}
-	else if(ADC_number == 3){
-		if(Channal == 0){
-			sConfig.Channel = ADC_CHANNEL_0;
-		}
-		else if(Channal == 1){
-			sConfig.Channel = ADC_CHANNEL_1;
-		}
-		else if(Channal == 2){
-			sConfig.Channel = ADC_CHANNEL_2;
-		}
-		else if(Channal == 3){
-			sConfig.Channel = ADC_CHANNEL_3;
-		}
-		else if(Channal == 4){
-			sConfig.Channel = ADC_CHANNEL_4;
-		}
-		else if(Channal == 5){
-			sConfig.Channel = ADC_CHANNEL_5;
-		}
-		else if(Channal == 6){
-			sConfig.Channel = ADC_CHANNEL_6;
-		}
-		else if(Channal == 7){
-			sConfig.Channel = ADC_CHANNEL_7;
-		}
-		else if(Channal == 8){
-			sConfig.Channel = ADC_CHANNEL_8;
-		}
-		else if(Channal == 9){
-			sConfig.Channel = ADC_CHANNEL_9;
-		}
-		else if(Channal == 10){
-			sConfig.Channel = ADC_CHANNEL_10;
-		}
-		else if(Channal == 11){
-			sConfig.Channel = ADC_CHANNEL_11;
-		}
-		else if(Channal == 12){
-			sConfig.Channel = ADC_CHANNEL_12;
-		}
-		else if(Channal == 13){
-			sConfig.Channel = ADC_CHANNEL_13;
-		}
-		else if(Channal == 14){
-			sConfig.Channel = ADC_CHANNEL_14;
-		}
-		else if(Channal == 15){
-			sConfig.Channel = ADC_CHANNEL_15;
-		}
-		if(HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK){
-			Error_Handler();
-		}
-	}
-	return HAL_OK;
-}
 
 
 /* USER CODE END 0 */
@@ -308,13 +141,13 @@ HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 
 
-//TIM_freq(1, f_sw);
+TIM_freq(1, f_sw);
 //writeValueToUART(TIM1->PSC);
 //writeValueToUART(TIM1->ARR);
 
 // TIM1 - 20 kHz
-TIM1->PSC = 1;
-TIM1->ARR = 2099;
+//TIM1->PSC = 1;
+//TIM1->ARR = 2099;
 // TIM1 - 1 Hz
 //TIM1->PSC = 1343;
 //TIM1->ARR = 62499;
@@ -683,7 +516,7 @@ static void MX_TIM1_Init(void)
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 125;
+  sBreakDeadTimeConfig.DeadTime = 25;
   sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
   sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
   sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
@@ -817,6 +650,7 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 
 	if(htim->Instance==TIM1){
+		TIM1_falg = 1;
 		//writeValueToUART(1);
 		angle = angle + RADIAL_SPEED;
 	    if (angle > 6.2831853072f){
