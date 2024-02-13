@@ -1,14 +1,12 @@
 /*
- * ADCMeas.c
+ * adc_handler.c
  *
- *  Created on: Feb 12, 2024
- *      Author: Bausa
- *      chatGPT siger:
- *
- *
- *
+ *  Created on: Feb 13, 2024
+ *      Author: au467674
  */
-#include "ADCMeas.h"
+/* Includes ------------------------------------------------------------------*/
+#include "adc_handler.h"
+
 
 
 uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
@@ -176,4 +174,169 @@ uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	}
 	return HAL_OK;
 }
+
+uint8_t adc_voltage_Ph12(uint32_t* adcValue){
+
+	ADC_Selector(1,10);
+
+	// Start ADC Conversion
+	if(HAL_ADC_Start(&hadc1) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+
+	// Wait for conversion to complete
+	if(HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+	// Read the ADC Value
+	*adcValue = HAL_ADC_GetValue(&hadc1);
+
+	return HAL_OK;
+}
+uint8_t adc_voltage_Ph13(uint32_t* adcValue){
+
+	ADC_Selector(2,13);
+
+	// Start ADC Conversion
+	if(HAL_ADC_Start(&hadc2) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+
+	// Wait for conversion to complete
+	if(HAL_ADC_PollForConversion(&hadc2, HAL_MAX_DELAY) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+	// Read the ADC Value
+	*adcValue = HAL_ADC_GetValue(&hadc2);
+
+	return HAL_OK;
+}
+uint8_t adc_voltage_ph23(uint32_t* adcValue){
+
+	ADC_Selector(3,0);
+
+	// Start ADC Conversion
+	if(HAL_ADC_Start(&hadc3) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+
+	// Wait for conversion to complete
+	if(HAL_ADC_PollForConversion(&hadc3, HAL_MAX_DELAY) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+	// Read the ADC Value
+	*adcValue = HAL_ADC_GetValue(&hadc3);
+
+	return HAL_OK;
+}
+
+uint8_t adc_current_ph1(uint32_t* adcValue){
+
+	ADC_Selector(1,11);
+
+	// Start ADC Conversion
+	if(HAL_ADC_Start(&hadc1) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+
+	// Wait for conversion to complete
+	if(HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+	// Read the ADC Value
+	*adcValue = HAL_ADC_GetValue(&hadc1);
+
+	return HAL_OK;
+}
+uint8_t adc_current_ph2(uint32_t* adcValue){
+
+	ADC_Selector(2,13);
+
+	// Start ADC Conversion
+	if(HAL_ADC_Start(&hadc2) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+
+	// Wait for conversion to complete
+	if(HAL_ADC_PollForConversion(&hadc2, HAL_MAX_DELAY) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+	// Read the ADC Value
+	*adcValue = HAL_ADC_GetValue(&hadc2);
+
+	return HAL_OK;
+}
+uint8_t adc_current_ph3(uint32_t* adcValue){
+
+	ADC_Selector(3,1);
+
+	// Start ADC Conversion
+	if(HAL_ADC_Start(&hadc3) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+
+	// Wait for conversion to complete
+	if(HAL_ADC_PollForConversion(&hadc3, HAL_MAX_DELAY) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+	// Read the ADC Value
+	*adcValue = HAL_ADC_GetValue(&hadc3);
+
+	return HAL_OK;
+}
+
+
+uint8_t adc_voltage_offset(uint32_t* adcValue){
+
+	ADC_Selector(1,4);
+
+	// Start ADC Conversion
+	if(HAL_ADC_Start(&hadc1) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+
+	// Wait for conversion to complete
+	if(HAL_ADC_PollForConversion(&hadc1, HAL_MAX_DELAY) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+	// Read the ADC Value
+	*adcValue = HAL_ADC_GetValue(&hadc1);
+
+	return HAL_OK;
+}
+uint8_t adc_voltage_DClink(uint32_t* adcValue){
+
+	ADC_Selector(2,6);
+
+	// Start ADC Conversion
+	if(HAL_ADC_Start(&hadc2) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+
+	// Wait for conversion to complete
+	if(HAL_ADC_PollForConversion(&hadc2, HAL_MAX_DELAY) != HAL_OK) {
+		// Error Handler
+		Error_Handler();
+	}
+	// Read the ADC Value
+	*adcValue = HAL_ADC_GetValue(&hadc2);
+
+	return HAL_OK;
+}
+
 

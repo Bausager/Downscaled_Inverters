@@ -23,7 +23,7 @@
 /* USER CODE BEGIN Includes */
 #include "TimerConfig.h"
 #include "Inverter.h"
-#include "ADCMeas.h"
+#include "adc_meas.h"
 
 
 //#include <math.h>

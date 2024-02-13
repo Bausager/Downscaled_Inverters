@@ -30,6 +30,7 @@
 //#define svm_scaling  (2.0f / sqrt(3.0f))
 //#define MAX_MODULATION_INDEX  (1.7320508075688772935274463415059f / 2.0f)
 
+
 /*** Variables as hardcoded values: ***/
 #define PI 3.1415926536f
 #define PI2 6.2831853072f
@@ -45,6 +46,10 @@
 #define sector5_angle 6.2831853072f
 #define svm_scaling  1.1547005384f
 #define MAX_MODULATION_INDEX 0.86602540378443f
+
+
+
+
 /* Puplic function prototypes -----------------------------------------------*/
 uint8_t svm_block_init(uint32_t AutoReloadRegister, float T_sw);
 uint8_t svm_block(float modulation_idx, float angle_rad, float* tim_1, float* tim_2, float* tim_3);

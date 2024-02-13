@@ -9,8 +9,6 @@
 /* Includes ------------------------------------------------------------------*/
 #include "Inverter.h"
 
-extern ADC_HandleTypeDef hadc1;  // Adjust the handle name and instance as needed
-
 
 /* Puplic variables ---------------------------------------------------------*/
 static float svm_period_scaler, svm_T_sw;
