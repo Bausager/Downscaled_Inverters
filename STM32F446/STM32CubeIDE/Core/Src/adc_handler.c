@@ -12,7 +12,7 @@
 uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	ADC_ChannelConfTypeDef sConfig = {0};
 	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+	sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
 	if(ADC_number == 1){
 		if(Channal == 0){
 			sConfig.Channel = ADC_CHANNEL_0;
@@ -175,7 +175,7 @@ uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	return HAL_OK;
 }
 
-uint8_t adc_voltage_Ph12(uint32_t* adcValue){
+uint32_t adc_voltage_ph12(){
 
 	ADC_Selector(1,10);
 
@@ -190,12 +190,12 @@ uint8_t adc_voltage_Ph12(uint32_t* adcValue){
 		// Error Handler
 		Error_Handler();
 	}
-	// Read the ADC Value
-	*adcValue = HAL_ADC_GetValue(&hadc1);
 
-	return HAL_OK;
+	// Read the ADC Value
+	return HAL_ADC_GetValue(&hadc1);
+
 }
-uint8_t adc_voltage_Ph13(uint32_t* adcValue){
+uint32_t adc_voltage_ph13(){
 
 	ADC_Selector(2,13);
 
@@ -211,11 +211,9 @@ uint8_t adc_voltage_Ph13(uint32_t* adcValue){
 		Error_Handler();
 	}
 	// Read the ADC Value
-	*adcValue = HAL_ADC_GetValue(&hadc2);
-
-	return HAL_OK;
+	return HAL_ADC_GetValue(&hadc2);
 }
-uint8_t adc_voltage_ph23(uint32_t* adcValue){
+uint32_t adc_voltage_ph23(){
 
 	ADC_Selector(3,0);
 
@@ -231,12 +229,10 @@ uint8_t adc_voltage_ph23(uint32_t* adcValue){
 		Error_Handler();
 	}
 	// Read the ADC Value
-	*adcValue = HAL_ADC_GetValue(&hadc3);
-
-	return HAL_OK;
+	return HAL_ADC_GetValue(&hadc3);
 }
 
-uint8_t adc_current_ph1(uint32_t* adcValue){
+uint32_t adc_current_ph1(){
 
 	ADC_Selector(1,11);
 
@@ -252,11 +248,9 @@ uint8_t adc_current_ph1(uint32_t* adcValue){
 		Error_Handler();
 	}
 	// Read the ADC Value
-	*adcValue = HAL_ADC_GetValue(&hadc1);
-
-	return HAL_OK;
+	return HAL_ADC_GetValue(&hadc1);
 }
-uint8_t adc_current_ph2(uint32_t* adcValue){
+uint32_t adc_current_ph2(){
 
 	ADC_Selector(2,13);
 
@@ -272,11 +266,9 @@ uint8_t adc_current_ph2(uint32_t* adcValue){
 		Error_Handler();
 	}
 	// Read the ADC Value
-	*adcValue = HAL_ADC_GetValue(&hadc2);
-
-	return HAL_OK;
+	return  HAL_ADC_GetValue(&hadc2);
 }
-uint8_t adc_current_ph3(uint32_t* adcValue){
+uint32_t adc_current_ph3(){
 
 	ADC_Selector(3,1);
 
@@ -292,13 +284,11 @@ uint8_t adc_current_ph3(uint32_t* adcValue){
 		Error_Handler();
 	}
 	// Read the ADC Value
-	*adcValue = HAL_ADC_GetValue(&hadc3);
-
-	return HAL_OK;
+	return HAL_ADC_GetValue(&hadc3);
 }
 
 
-uint8_t adc_voltage_offset(uint32_t* adcValue){
+uint32_t adc_voltage_offset(){
 
 	ADC_Selector(1,4);
 
@@ -314,11 +304,9 @@ uint8_t adc_voltage_offset(uint32_t* adcValue){
 		Error_Handler();
 	}
 	// Read the ADC Value
-	*adcValue = HAL_ADC_GetValue(&hadc1);
-
-	return HAL_OK;
+	return HAL_ADC_GetValue(&hadc1);
 }
-uint8_t adc_voltage_DClink(uint32_t* adcValue){
+uint32_t adc_voltage_DClink(){
 
 	ADC_Selector(2,6);
 
@@ -334,9 +322,7 @@ uint8_t adc_voltage_DClink(uint32_t* adcValue){
 		Error_Handler();
 	}
 	// Read the ADC Value
-	*adcValue = HAL_ADC_GetValue(&hadc2);
-
-	return HAL_OK;
+	return HAL_ADC_GetValue(&hadc2);
 }
 
 

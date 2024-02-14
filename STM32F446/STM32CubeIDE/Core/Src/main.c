@@ -24,6 +24,7 @@
 #include "TimerConfig.h"
 #include "Inverter.h"
 #include "adc_meas.h"
+#include "measCalc.h"
 
 
 //#include <math.h>
@@ -60,15 +61,15 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 const float f_sw = 20e3;
-const float Hz_Out = 50;
-float RADIAL_SPEED = (Hz_Out * PI2) / f_sw;
+const float nom_f = 60.0f;
+float RADIAL_SPEED = (nom_f * PI2) / f_sw;
 
 float angle = 0;
 float PWM1, PWM2, PWM3;
-float val1, val2, val3, val4, val5, val6, val7;
-float Mi = 0.80;
-uint8_t TIM1_falg = 0;
-uint8_t TIM2_falg = 0;
+float Uab, Uac, Ubc, Ia, Ib, Ic, P, Q;
+float Offset, DCLink;
+float Mi = 0.60;
+uint32_t TIM2_falg = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -141,6 +142,10 @@ HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
 HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 
 
+
+
+
+
 TIM_freq(1, f_sw);
 //writeValueToUART(TIM1->PSC);
 //writeValueToUART(TIM1->ARR);
@@ -153,16 +158,23 @@ TIM_freq(1, f_sw);
 //TIM1->ARR = 62499;
 
 
-//TIM_freq(2, 1.0f);
+TIM_freq(2, nom_f * 50);
 //writeValueToUART(TIM2->PSC);
 //writeValueToUART(TIM2->ARR);
 
 // TIM2 - 1 Hz
-TIM2->PSC = 1;
-TIM2->ARR = 41999998;
+//TIM2->PSC = 1;
+//TIM2->ARR = 41999998;
 
+setVoltageFilterCoeff(0.99);
+setCurrentFilterCoeff(0.99);
 
 svm_block_init(TIM1->ARR, f_sw);
+
+for (int i = 0; i < (uint32_t)(nom_f * 50); ++i) {
+	DCLink = Voltage_DCLink();
+	Offset = Voltage_Offset();
+}
 
 HAL_TIM_Base_Start_IT(&htim1);
 HAL_TIM_Base_Start_IT(&htim2);
@@ -172,68 +184,19 @@ HAL_TIM_Base_Start_IT(&htim2);
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
-
   while (1)
   {
-if (TIM2_falg) {
 
 
+	if (TIM2_falg >= nom_f * 50) {
+		instantaneousPower(Uab, Uac, Ubc, Ia, Ib, Ic, &P, &Q);
 
-	ADC_Selector(1, 10);
-	ADC_Selector(2, 12);
-	ADC_Selector(3, 0);
+		char outputBuffer[256];
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ph12: %f. Ph13: %f. Ph23: %f. Ph1: %f. Ph2: %f. Ph3: %f. DCLink: %f. Offset: %f. \r\n", val1, val2, val3 ,val4, val5, val6, DCLink, Offset);
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f.\r\n", P, Q);
+		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
+		TIM2_falg = 0;
 
-	// Start ADC Conversion
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_Start(&hadc2);
-	HAL_ADC_Start(&hadc3);
-
-	// Poll ADC1 Perihperal & TimeOut = 1Sec
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	HAL_ADC_PollForConversion(&hadc2, 1000);
-	HAL_ADC_PollForConversion(&hadc3, 1000);
-
-	// Read The ADC Conversion Result & Map It To PWM DutyCycle
-	val1 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
-	val3 =((double)HAL_ADC_GetValue(&hadc2) / 4095.0f) * 3.3f;
-	val5 =((double)HAL_ADC_GetValue(&hadc3) / 4095.0f) * 3.3f;
-
-	ADC_Selector(1, 11);
-	ADC_Selector(2, 13);
-	ADC_Selector(3, 1);
-
-	// Start ADC Conversion
-	HAL_ADC_Start(&hadc1);
-	HAL_ADC_Start(&hadc2);
-	HAL_ADC_Start(&hadc3);
-
-	// Poll ADC1 Perihperal & TimeOut = 1Sec
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-	HAL_ADC_PollForConversion(&hadc2, 1000);
-	HAL_ADC_PollForConversion(&hadc3, 1000);
-
-	// Read The ADC Conversion Result & Map It To PWM DutyCycle
-	val2 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
-	val4 =((double)HAL_ADC_GetValue(&hadc2) / 4095.0f) * 3.3f;
-	val6 =((double)HAL_ADC_GetValue(&hadc3) / 4095.0f) * 3.3f;
-
-
-
-	ADC_Selector(1, 4);
-
-	// Start ADC Conversion
-	HAL_ADC_Start(&hadc1);
-
-	// Poll ADC1 Perihperal & TimeOut = 1Sec
-	HAL_ADC_PollForConversion(&hadc1, 1000);
-
-	// Read The ADC Conversion Result & Map It To PWM DutyCycle
-	val7 =((double)HAL_ADC_GetValue(&hadc1) / 4095.0f) * 3.3f;
-
-	char outputBuffer[256];
-	uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "val1: %f. val2: %f. val3: %f. val4: %f. val5: %f. val6: %f. val7: %f. \r\n", val1, val2, val3 ,val4, val5, val6, val7);
-	HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
-	TIM2_falg = 0;
 }
     /* USER CODE END WHILE */
 
@@ -650,7 +613,6 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 
 	if(htim->Instance==TIM1){
-		TIM1_falg = 1;
 		//writeValueToUART(1);
 		angle = angle + RADIAL_SPEED;
 	    if (angle > 6.2831853072f){
@@ -662,12 +624,21 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 	    TIM1->CCR1 = PWM1;
 	    TIM1->CCR2 = PWM2;
 	    TIM1->CCR3 = PWM3;
+
+
 	}
 	else{
 	}
 
 	if(htim->Instance==TIM2){
-		TIM2_falg = 1;
+		Uab = Voltage_Ph12(Uab);
+		Uac = Voltage_Ph13(Uac);
+		Ubc = Voltage_Ph23(Ubc);
+
+		Ia = Current_Ph1(Ia);
+		Ib = Current_Ph2(Ib);
+		Ic = Current_Ph3(Ic);
+		TIM2_falg++;
 
 	}
 	else{

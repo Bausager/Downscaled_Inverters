@@ -9,8 +9,12 @@
 #define INC_FILTER_H_
 
 /* Includes ------------------------------------------------------------------*/
+#include "main.h"
 
 /* Puplic variables ---------------------------------------------------------*/
+
+
+float exponentialFilter(float alpha, float avg, float value);
 
 
 #endif /* INC_FILTER_H_ */
