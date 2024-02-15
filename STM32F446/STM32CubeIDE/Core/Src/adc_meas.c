@@ -10,10 +10,12 @@
 /* Puplic variables ---------------------------------------------------------*/
 static float temp, voltageFilterCoeff, currentFilterCoeff;
 
-static float initializingFilterCoeff = 0.999f;
+static float Uab, Uac, Ubc, Ia, Ib, Ic;
+
 static float offset = 1.65f;
 static float DCLink = 5.0f;
 
+static const float initializingFilterCoeff = 0.999f;
 static const float ADCConverstionRate = 3.3f/4095.0f;
 static const float VoltageConverstionRate = 1.0f / (510.0f/3300.0f);
 static const float CurrentConverstionRate = 1.0f/ ((1.5f*20.0f)/2.0f);

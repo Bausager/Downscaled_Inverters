@@ -10,8 +10,16 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include <main.h>
+#include "math.h"
+
+uint8_t setPowerFilterCoeff(float coeff);
 
 uint8_t instantaneousPower(float Uab, float Uac, float Ubc, float Ia, float Ib, float Ic, float* P, float* Q);
-/* Puplic variables ---------------------------------------------------------*/
+
+float powerFactor(float P, float Q);
+
+
+
+
 
 #endif /* INC_MEASCALC_H_ */

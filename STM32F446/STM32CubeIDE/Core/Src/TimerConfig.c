@@ -35,6 +35,19 @@ uint8_t TIM_freq(uint8_t htim, float Hz){
 	//  See page 142 - RCC APB2 peripheral reset register (RCC_APB2RSTR)
 	/*** Timer 1 ***/
 	if (htim == 1) {
+
+
+		if (Hz == 20e3) {
+			TIM1->PSC = 1;
+			TIM1->ARR = 2099;
+			return HAL_OK;
+		}
+		else if (Hz == 1) {
+			TIM1->PSC = 1343;
+			TIM1->ARR = 62499;
+			return HAL_OK;
+		}
+
 		// Finds the Timer Clock Frequency.
 		if ((RCC->CFGR & RCC_CFGR_PPRE2) != 0) {
 			PCLKx_timer_clocks[PCLK2] = PCLKx_timer_clocks[PCLK2]*2.0f;
@@ -86,6 +99,13 @@ uint8_t TIM_freq(uint8_t htim, float Hz){
 	/*** Timer 2 ***/
 	// See page 139 - RCC APB1 peripheral reset register (RCC_APB1RSTR)
 	else if (htim == 2) {
+
+
+		if (Hz == 1) {
+			TIM2->PSC = 1;
+			TIM2->ARR = 41999998;
+			return HAL_OK;
+		}
 
 		// Finds the Timer Clock Frequency.
 		if ((RCC->CFGR & RCC_CFGR_PPRE1) != 0) {

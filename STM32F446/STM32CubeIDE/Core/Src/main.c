@@ -61,14 +61,15 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 const float f_sw = 20e3;
-const float nom_f = 60.0f;
+const float nom_f = 25.0f;
+const float sample_feq = 5e3;
 float RADIAL_SPEED = (nom_f * PI2) / f_sw;
 
 float angle = 0;
 float PWM1, PWM2, PWM3;
 float Uab, Uac, Ubc, Ia, Ib, Ic, P, Q;
 float Offset, DCLink;
-float Mi = 0.60;
+float Mi = 0.8;
 uint32_t TIM2_falg = 0;
 /* USER CODE END PV */
 
@@ -143,31 +144,17 @@ HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 
 
 
-
-
-
 TIM_freq(1, f_sw);
 //writeValueToUART(TIM1->PSC);
 //writeValueToUART(TIM1->ARR);
-
-// TIM1 - 20 kHz
-//TIM1->PSC = 1;
-//TIM1->ARR = 2099;
-// TIM1 - 1 Hz
-//TIM1->PSC = 1343;
-//TIM1->ARR = 62499;
-
-
-TIM_freq(2, nom_f * 50);
+TIM_freq(2, sample_feq);
 //writeValueToUART(TIM2->PSC);
 //writeValueToUART(TIM2->ARR);
 
-// TIM2 - 1 Hz
-//TIM2->PSC = 1;
-//TIM2->ARR = 41999998;
 
-setVoltageFilterCoeff(0.99);
-setCurrentFilterCoeff(0.99);
+setVoltageFilterCoeff(0.9);
+setCurrentFilterCoeff(0.9);
+setPowerFilterCoeff(0.999);
 
 svm_block_init(TIM1->ARR, f_sw);
 
@@ -188,12 +175,12 @@ HAL_TIM_Base_Start_IT(&htim2);
   {
 
 
-	if (TIM2_falg >= nom_f * 50) {
-		instantaneousPower(Uab, Uac, Ubc, Ia, Ib, Ic, &P, &Q);
+	if (TIM2_falg >= sample_feq) {
+
 
 		char outputBuffer[256];
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ph12: %f. Ph13: %f. Ph23: %f. Ph1: %f. Ph2: %f. Ph3: %f. DCLink: %f. Offset: %f. \r\n", val1, val2, val3 ,val4, val5, val6, DCLink, Offset);
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f.\r\n", P, Q);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Uab: %f. Uac: %f. Ubc: %f. Ia: %f. Ib: %f. Ic: %f. DCLink: %f. Offset: %f. \r\n", Uab, Uac, Ubc ,Ia, Ib, Ic, DCLink, Offset);
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f. PF: %f DCLink: %f.\r\n", P, Q, powerFactor(P, Q), DCLink);
 		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
 		TIM2_falg = 0;
 
@@ -638,6 +625,8 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 		Ia = Current_Ph1(Ia);
 		Ib = Current_Ph2(Ib);
 		Ic = Current_Ph3(Ic);
+
+		instantaneousPower(Uab, Uac, Ubc, Ia, Ib, Ic, &P, &Q);
 		TIM2_falg++;
 
 	}
