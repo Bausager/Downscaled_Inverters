@@ -68,6 +68,7 @@ float RADIAL_SPEED = (nom_f * PI2) / f_sw;
 float angle = 0;
 float PWM1, PWM2, PWM3;
 float Uab, Uac, Ubc, Ia, Ib, Ic, P, Q;
+float UaRMS, UbRMS, UcRMS;
 float Offset, DCLink;
 float Mi = 0.8;
 uint32_t TIM2_falg = 0;
@@ -152,9 +153,10 @@ TIM_freq(2, sample_feq);
 //writeValueToUART(TIM2->ARR);
 
 
-setVoltageFilterCoeff(0.9);
-setCurrentFilterCoeff(0.9);
-setPowerFilterCoeff(0.999);
+setVoltageFilterCoeff(0.5);
+setCurrentFilterCoeff(0.5);
+setRMSFilterLength((uint32_t)(sample_feq));
+setPowerFilterCoeff(0.99);
 
 svm_block_init(TIM1->ARR, f_sw);
 
@@ -166,7 +168,7 @@ for (int i = 0; i < (uint32_t)(nom_f * 50); ++i) {
 HAL_TIM_Base_Start_IT(&htim1);
 HAL_TIM_Base_Start_IT(&htim2);
 
-
+writeValueToUART(1.0);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -176,11 +178,11 @@ HAL_TIM_Base_Start_IT(&htim2);
 
 
 	if (TIM2_falg >= sample_feq) {
-
-
+		//writeValueToUART(UaRMS);
 		char outputBuffer[256];
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Uab: %f. Uac: %f. Ubc: %f. Ia: %f. Ib: %f. Ic: %f. DCLink: %f. Offset: %f. \r\n", Uab, Uac, Ubc ,Ia, Ib, Ic, DCLink, Offset);
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f. PF: %f DCLink: %f.\r\n", P, Q, powerFactor(P, Q), DCLink);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f. PF: %f DCLink: %f.\r\n", P, Q, powerFactor(P, Q), DCLink);
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ua: %f. Ub: %f. Uc: %f,\r\n", UaRMS, UbRMS, UcRMS);
 		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
 		TIM2_falg = 0;
 
@@ -627,6 +629,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 		Ic = Current_Ph3(Ic);
 
 		instantaneousPower(Uab, Uac, Ubc, Ia, Ib, Ic, &P, &Q);
+		calcRMS(&UaRMS, &UbRMS, &UcRMS, Uab, Uac, Ubc);
 		TIM2_falg++;
 
 	}

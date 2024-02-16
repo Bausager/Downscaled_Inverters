@@ -15,6 +15,7 @@
 
 
 float exponentialFilter(float alpha, float avg, float value);
+float RMSFilter(float rmsFilterLength, float rmsValue, float newValue);
 
 
 #endif /* INC_FILTER_H_ */
