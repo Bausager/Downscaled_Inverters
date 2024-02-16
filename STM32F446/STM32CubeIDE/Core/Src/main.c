@@ -626,7 +626,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 	    }
 	    svm_block(Mi, angle, &PWM1, &PWM2, &PWM3);
 
-
 	    TIM1->CCR1 = PWM1;
 	    TIM1->CCR2 = PWM2;
 	    TIM1->CCR3 = PWM3;
@@ -638,7 +637,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 
 	if(htim->Instance==TIM2){
 		TIM2_falg++;
-
 	}
 	else{
 	}
