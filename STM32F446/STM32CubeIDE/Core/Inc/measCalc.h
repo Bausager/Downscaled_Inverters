@@ -21,6 +21,7 @@ uint8_t getUx(float* Ua, float* Ub, float* Uc);
 float powerFactor(float P, float Q);
 
 uint8_t calcRMS(float* UaRMS, float* UbRMS, float* UcRMS, float Uab, float Uac, float Ubc);
+uint8_t phaseNeutralCalc(float Uab, float Uac, float Ubc, float* Ua, float* Ub, float* Uc);
 
 
 
