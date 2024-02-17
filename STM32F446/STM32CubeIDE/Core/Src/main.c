@@ -68,9 +68,11 @@ const float sample_feq = 5e3;
 float RADIAL_SPEED = (nom_f * PI2) / f_sw;
 
 float angle = 0;
+float Theta = 0;
 float PWM1, PWM2, PWM3;
 float Uab, Uac, Ubc, Ua, Ub, Uc, Ia, Ib, Ic, P, Q;
 float UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS;
+float Ud, Uq, Uz;
 float Offset, DCLink;
 float Mi = 0.8;
 uint32_t TIM2_falg = 0;
@@ -156,10 +158,11 @@ TIM_freq(2, sample_feq);
 //writeValueToUART(TIM2->ARR);
 
 
-setVoltageFilterCoeff(0);
+setVoltageFilterCoeff(0.0);
 setCurrentFilterCoeff(0);
 setPowerFilterCoeff(0.99);
 setRMSFilterLength((uint32_t)((sample_feq/nom_f)*5.0f));
+setPIdqPLL(nom_f, sample_feq);
 
 svm_block_init(TIM1->ARR, f_sw);
 
@@ -179,12 +182,14 @@ HAL_TIM_Base_Start_IT(&htim2);
 
 
 	if (TIM2_falg >= sample_feq) {
-		//writeValueToUART(UaRMS);
+
 		char outputBuffer[256];
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Uab: %f. Uac: %f. Ubc: %f. Ia: %f. Ib: %f. Ic: %f. DCLink: %f. Offset: %f. \r\n", Uab, Uac, Ubc ,Ia, Ib, Ic, DCLink, Offset);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f. PF: %f DCLink: %f.\r\n", P, Q, powerFactor(P, Q), DCLink);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %f. UbRMS: %f. UcRMS: %f,\r\n", UaRMS, UbRMS, UcRMS);
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "IaRMS: %f. IbRMS: %f. IcRMS: %f,\r\n", IaRMS, IbRMS, IcRMS);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "IaRMS: %f. IbRMS: %f. IcRMS: %f,\r\n", IaRMS, IbRMS, IcRMS);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ud: %f. Uq: %f.\r\n", Ud, Uq);
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL angle: %f.\r\n", angle, Theta);
 		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
 		TIM2_falg = 0;
 		temp = 0;
@@ -198,14 +203,19 @@ HAL_TIM_Base_Start_IT(&htim2);
 		Ubc = Voltage_Ph23(Ubc);
 		//phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
 
-		Ia = Current_Ph1(Ia);
-		Ib = Current_Ph2(Ib);
-		Ic = Current_Ph3(Ic);
+		//Ia = Current_Ph1(Ia);
+		//Ib = Current_Ph2(Ib);
+		//Ic = Current_Ph3(Ic);
 
+		phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
+		simpClarkeParkTrans(Ua, Ub, Uc, angle, &Ud, &Uq);
+
+		dqPLL(Ua, Ub, Uc, &Theta, &Ud);
 
 		//instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
 		//calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
 		//calcRMS(&IaRMS, &IbRMS, &IcRMS, Ia, Ib, Ic);
+
 	}
     /* USER CODE END WHILE */
 
