@@ -189,7 +189,7 @@ HAL_TIM_Base_Start_IT(&htim2);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %f. UbRMS: %f. UcRMS: %f,\r\n", UaRMS, UbRMS, UcRMS);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "IaRMS: %f. IbRMS: %f. IcRMS: %f,\r\n", IaRMS, IbRMS, IcRMS);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ud: %f. Uq: %f.\r\n", Ud, Uq);
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL angle: %f.\r\n", angle, Theta);
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL theta: %f. (angle-theta): %f\r\n", angle, Theta, angle-Theta);
 		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
 		TIM2_falg = 0;
 		temp = 0;
@@ -208,7 +208,7 @@ HAL_TIM_Base_Start_IT(&htim2);
 		//Ic = Current_Ph3(Ic);
 
 		phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
-		simpClarkeParkTrans(Ua, Ub, Uc, angle, &Ud, &Uq);
+		//simpClarkeParkTrans(Ua, Ub, Uc, angle, &Ud, &Uq);
 
 		dqPLL(Ua, Ub, Uc, &Theta, &Ud);
 
