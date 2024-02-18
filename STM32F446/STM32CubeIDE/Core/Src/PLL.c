@@ -29,7 +29,7 @@ uint8_t dqPLL(float Ua, float Ub, float Uc, float* Theta, float* Ud){
 
 	PIintegral +=  (Ts/2.0f) * (temp1 + oldError);
 	oldError = temp1;
-	temp1 = Kp*(temp1) + (PIintegral/Ti);
+	temp1 = Kp*(temp1 + (PIintegral/Ti));
 
 	temp1 += nom_freq;
 

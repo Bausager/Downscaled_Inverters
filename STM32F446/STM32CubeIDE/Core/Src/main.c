@@ -27,6 +27,7 @@
 #include "measCalc.h"
 #include "transfCalc.h"
 #include "PLL.h"
+#include "GridEstimation.h"
 
 
 //#include <math.h>
@@ -74,9 +75,15 @@ float Uab, Uac, Ubc, Ua, Ub, Uc, Ia, Ib, Ic, P, Q;
 float UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS;
 float Ud, Uq, Uz;
 float Offset, DCLink;
-float Mi = 0.8;
+float Mi = 0.6;
 uint32_t TIM2_falg = 0;
-uint32_t temp = 0;
+float temp = 0;
+int8_t tempFalg = 0;
+#define Max_Samples 4
+
+struct gridMeasValues GridMeas[Max_Samples];
+struct GridEstimationValues GridEsti[Max_Samples];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -157,8 +164,8 @@ TIM_freq(2, sample_feq);
 //writeValueToUART(TIM2->PSC);
 //writeValueToUART(TIM2->ARR);
 
-
-setVoltageFilterCoeff(0.0);
+InitiliseGridStruct(Max_Samples, GridEsti);
+setVoltageFilterCoeff(0.5);
 setCurrentFilterCoeff(0);
 setPowerFilterCoeff(0.99);
 setRMSFilterLength((uint32_t)((sample_feq/nom_f)*5.0f));
@@ -173,6 +180,23 @@ for (int i = 0; i < (uint32_t)(nom_f * 50); ++i) {
 
 HAL_TIM_Base_Start_IT(&htim1);
 HAL_TIM_Base_Start_IT(&htim2);
+
+GridMeas[tempFalg].Vn = 10.29;
+GridMeas[tempFalg].Vn = 13.68;
+GridMeas[tempFalg].Vn = 17.10;
+GridMeas[tempFalg].Vn = 20.52;
+
+GridMeas[tempFalg].Pn = 20.65;
+GridMeas[tempFalg].Pn = 36.71;
+GridMeas[tempFalg].Pn = 57.36;
+GridMeas[tempFalg].Pn = 82.60;
+
+GridMeas[tempFalg].Qn = 3.75;
+GridMeas[tempFalg].Qn = 6.66;
+GridMeas[tempFalg].Qn = 10.41;
+GridMeas[tempFalg].Qn = 14.99;
+
+
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -182,17 +206,35 @@ HAL_TIM_Base_Start_IT(&htim2);
 
 
 	if (TIM2_falg >= sample_feq) {
+		Mi -= 0.05f;
+		if ((0 <= tempFalg) && (tempFalg < Max_Samples)) {
+			writeValueToUART(tempFalg);
+			//GridMeas[tempFalg].Vn = (UaRMS + UbRMS + UcRMS)/3.0f;
+			//GridMeas[tempFalg].Pn = -P;
+			//GridMeas[tempFalg].Qn = -Q;
+			tempFalg++;
+		}else{
+			Mi = 0.6f;
+			tempFalg = -1;
+		}
 
+		if (tempFalg == -1) {
+			GeneticandRandomSearch(Max_Samples, GridMeas, GridEsti);
+		}
 		char outputBuffer[256];
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Uab: %f. Uac: %f. Ubc: %f. Ia: %f. Ib: %f. Ic: %f. DCLink: %f. Offset: %f. \r\n", Uab, Uac, Ubc ,Ia, Ib, Ic, DCLink, Offset);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f. PF: %f DCLink: %f.\r\n", P, Q, powerFactor(P, Q), DCLink);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %f. UbRMS: %f. UcRMS: %f,\r\n", UaRMS, UbRMS, UcRMS);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "IaRMS: %f. IbRMS: %f. IcRMS: %f,\r\n", IaRMS, IbRMS, IcRMS);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ud: %f. Uq: %f.\r\n", Ud, Uq);
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL theta: %f. (angle-theta): %f\r\n", angle, Theta, angle-Theta);
+
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL theta: %f. (angle-theta): %f\r\n", angle, Theta, temp);
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Eg: %f. R: %f. X: %f. Error: %f.\r\n", GridEsti[0].Eg, GridEsti[0].R, GridEsti[0].X, GridEsti[0].Error);
 		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
 		TIM2_falg = 0;
 		temp = 0;
+
+
 
 	}
 	else if (TIM2_falg > temp){
@@ -203,18 +245,20 @@ HAL_TIM_Base_Start_IT(&htim2);
 		Ubc = Voltage_Ph23(Ubc);
 		//phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
 
-		//Ia = Current_Ph1(Ia);
-		//Ib = Current_Ph2(Ib);
-		//Ic = Current_Ph3(Ic);
+		Ia = Current_Ph1(Ia);
+		Ib = Current_Ph2(Ib);
+		Ic = Current_Ph3(Ic);
 
 		phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
 		//simpClarkeParkTrans(Ua, Ub, Uc, angle, &Ud, &Uq);
 
-		dqPLL(Ua, Ub, Uc, &Theta, &Ud);
+		//dqPLL(Uab, Ubc, -Uac, &Theta, &Ud);
+		//dqPLL(Uab, Uac, Ubc, &Theta, &Ud);
 
-		//instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
-		//calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
+		instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
+		calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
 		//calcRMS(&IaRMS, &IbRMS, &IcRMS, Ia, Ib, Ic);
+
 
 	}
     /* USER CODE END WHILE */
@@ -246,9 +290,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 84;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -263,7 +307,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {

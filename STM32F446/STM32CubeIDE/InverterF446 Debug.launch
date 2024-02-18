@@ -2,6 +2,10 @@
 <launchConfiguration type="com.st.stm32cube.ide.mcu.debug.launch.launchConfigurationType">
     <stringAttribute key="com.st.stm32cube.ide.mcu.debug.launch.access_port_id" value="0"/>
     <stringAttribute key="com.st.stm32cube.ide.mcu.debug.launch.cubeprog_external_loaders" value="[]"/>
+    <stringAttribute key="com.st.stm32cube.ide.mcu.debug.launch.debug_auth_certif_path" value=""/>
+    <booleanAttribute key="com.st.stm32cube.ide.mcu.debug.launch.debug_auth_check_enable" value="false"/>
+    <stringAttribute key="com.st.stm32cube.ide.mcu.debug.launch.debug_auth_key_path" value=""/>
+    <stringAttribute key="com.st.stm32cube.ide.mcu.debug.launch.debug_auth_permission" value="debug_non_secure_L3"/>
     <booleanAttribute key="com.st.stm32cube.ide.mcu.debug.launch.enable_live_expr" value="true"/>
     <booleanAttribute key="com.st.stm32cube.ide.mcu.debug.launch.enable_swv" value="false"/>
     <intAttribute key="com.st.stm32cube.ide.mcu.debug.launch.formatVersion" value="2"/>
@@ -31,9 +35,9 @@
     <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.log_file" value="C:\Users\au467674\OneDrive - Aarhus universitet\Desktop\Inverter F446\STM32CubeIDE\Debug\st-link_gdbserver_log.txt"/>
     <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.low_power_debug" value="enable"/>
     <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.max_halt_delay" value="2"/>
-    <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.reset_strategy" value="connect_under_reset"/>
+    <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.reset_strategy" value="system_reset"/>
     <booleanAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.stlink_check_serial_number" value="false"/>
-    <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.stlink_txt_serial_number" value=""/>
+    <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.stlink_txt_serial_number" value="066FFF484951717867113441"/>
     <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlink.watchdog_config" value="none"/>
     <booleanAttribute key="com.st.stm32cube.ide.mcu.debug.stlinkenable_rtos" value="false"/>
     <stringAttribute key="com.st.stm32cube.ide.mcu.debug.stlinkrestart_configurations" value="{&quot;fVersion&quot;:1,&quot;fItems&quot;:[{&quot;fDisplayName&quot;:&quot;Reset&quot;,&quot;fIsSuppressible&quot;:false,&quot;fResetAttribute&quot;:&quot;Software system reset&quot;,&quot;fResetStrategies&quot;:[{&quot;fDisplayName&quot;:&quot;Software system reset&quot;,&quot;fLaunchAttribute&quot;:&quot;system_reset&quot;,&quot;fGdbCommands&quot;:[&quot;monitor reset\r\n&quot;],&quot;fCmdOptions&quot;:[&quot;-g&quot;]},{&quot;fDisplayName&quot;:&quot;Hardware reset&quot;,&quot;fLaunchAttribute&quot;:&quot;hardware_reset&quot;,&quot;fGdbCommands&quot;:[&quot;monitor reset hardware\r\n&quot;],&quot;fCmdOptions&quot;:[&quot;-g&quot;]},{&quot;fDisplayName&quot;:&quot;Core reset&quot;,&quot;fLaunchAttribute&quot;:&quot;core_reset&quot;,&quot;fGdbCommands&quot;:[&quot;monitor reset core\r\n&quot;],&quot;fCmdOptions&quot;:[&quot;-g&quot;]},{&quot;fDisplayName&quot;:&quot;None&quot;,&quot;fLaunchAttribute&quot;:&quot;no_reset&quot;,&quot;fGdbCommands&quot;:[],&quot;fCmdOptions&quot;:[&quot;-g&quot;]}],&quot;fGdbCommandGroup&quot;:{&quot;name&quot;:&quot;Additional commands&quot;,&quot;commands&quot;:[]},&quot;fStartApplication&quot;:true}]}"/>
@@ -49,7 +53,7 @@
     <stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.ipAddress" value="localhost"/>
     <stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.jtagDeviceId" value="com.st.stm32cube.ide.mcu.debug.stlink"/>
     <stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.pcRegister" value=""/>
-    <intAttribute key="org.eclipse.cdt.debug.gdbjtag.core.portNumber" value="61234"/>
+    <intAttribute key="org.eclipse.cdt.debug.gdbjtag.core.portNumber" value="6123"/>
     <stringAttribute key="org.eclipse.cdt.debug.gdbjtag.core.runCommands" value=""/>
     <booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.setPcRegister" value="false"/>
     <booleanAttribute key="org.eclipse.cdt.debug.gdbjtag.core.setResume" value="true"/>
@@ -67,6 +71,7 @@
     <stringAttribute key="org.eclipse.cdt.launch.PROJECT_ATTR" value="InverterF446"/>
     <booleanAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_AUTO_ATTR" value="true"/>
     <stringAttribute key="org.eclipse.cdt.launch.PROJECT_BUILD_CONFIG_ID_ATTR" value="com.st.stm32cube.ide.mcu.gnu.managedbuild.config.exe.debug.1210039688"/>
+    <booleanAttribute key="org.eclipse.debug.core.ATTR_FORCE_SYSTEM_CONSOLE_ENCODING" value="false"/>
     <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
         <listEntry value="/InverterF446"/>
     </listAttribute>
