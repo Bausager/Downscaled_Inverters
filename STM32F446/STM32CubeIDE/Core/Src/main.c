@@ -25,6 +25,9 @@
 #include "Inverter.h"
 #include "adc_meas.h"
 #include "measCalc.h"
+#include "transfCalc.h"
+#include "PLL.h"
+#include "GridEstimation.h"
 
 
 //#include <math.h>
@@ -61,15 +64,27 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 const float f_sw = 20e3;
-const float nom_f = 60.0f;
+const float nom_f = 10.0f;
+const float sample_feq = 5e3;
 float RADIAL_SPEED = (nom_f * PI2) / f_sw;
 
 float angle = 0;
+float Theta = 0;
 float PWM1, PWM2, PWM3;
-float Uab, Uac, Ubc, Ia, Ib, Ic, P, Q;
+float Uab, Uac, Ubc, Ua, Ub, Uc, Ia, Ib, Ic, P, Q;
+float UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS;
+float Ud, Uq, Uz;
 float Offset, DCLink;
-float Mi = 0.60;
+float Mi = 0.6;
 uint32_t TIM2_falg = 0;
+float temp = 0;
+int8_t tempFalg = 0;
+#define Max_Samples 4
+#define M 100
+
+struct gridMeasValues GridMeas[Max_Samples];
+struct GridEstimationValues GridEsti[M];
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -143,31 +158,19 @@ HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
 
 
 
-
-
-
 TIM_freq(1, f_sw);
 //writeValueToUART(TIM1->PSC);
 //writeValueToUART(TIM1->ARR);
-
-// TIM1 - 20 kHz
-//TIM1->PSC = 1;
-//TIM1->ARR = 2099;
-// TIM1 - 1 Hz
-//TIM1->PSC = 1343;
-//TIM1->ARR = 62499;
-
-
-TIM_freq(2, nom_f * 50);
+TIM_freq(2, sample_feq);
 //writeValueToUART(TIM2->PSC);
 //writeValueToUART(TIM2->ARR);
 
-// TIM2 - 1 Hz
-//TIM2->PSC = 1;
-//TIM2->ARR = 41999998;
-
-setVoltageFilterCoeff(0.99);
-setCurrentFilterCoeff(0.99);
+InitiliseGridStruct(M, GridEsti);
+setVoltageFilterCoeff(0.5);
+setCurrentFilterCoeff(0);
+setPowerFilterCoeff(0.99);
+setRMSFilterLength((uint32_t)((sample_feq/nom_f)*5.0f));
+setPIdqPLL(nom_f, sample_feq);
 
 svm_block_init(TIM1->ARR, f_sw);
 
@@ -179,6 +182,21 @@ for (int i = 0; i < (uint32_t)(nom_f * 50); ++i) {
 HAL_TIM_Base_Start_IT(&htim1);
 HAL_TIM_Base_Start_IT(&htim2);
 
+GridMeas[0].Vn = 10.29;
+GridMeas[1].Vn = 13.68;
+GridMeas[2].Vn = 17.10;
+GridMeas[3].Vn = 20.52;
+
+GridMeas[0].Pn = 20.65;
+GridMeas[1].Pn = 36.71;
+GridMeas[2].Pn = 57.36;
+GridMeas[3].Pn = 82.60;
+
+GridMeas[0].Qn = 3.75;
+GridMeas[1].Qn = 6.66;
+GridMeas[2].Qn = 10.41;
+GridMeas[3].Qn = 14.99;
+
 
   /* USER CODE END 2 */
 
@@ -188,16 +206,62 @@ HAL_TIM_Base_Start_IT(&htim2);
   {
 
 
-	if (TIM2_falg >= nom_f * 50) {
-		instantaneousPower(Uab, Uac, Ubc, Ia, Ib, Ic, &P, &Q);
+	if (TIM2_falg >= sample_feq) {
+		Mi -= 0.05f;
+		if ((0 <= tempFalg) && (tempFalg < Max_Samples)) {
+			writeValueToUART(tempFalg);
+			//GridMeas[tempFalg].Vn = (UaRMS + UbRMS + UcRMS)/3.0f;
+			//GridMeas[tempFalg].Pn = -P;
+			//GridMeas[tempFalg].Qn = -Q;
+			tempFalg++;
+		}else{
+			Mi = 0.6f;
+			tempFalg = -1;
+		}
 
+		if (tempFalg == -1) {
+			GeneticandRandomSearch(Max_Samples, M, GridMeas, GridEsti);
+		}
 		char outputBuffer[256];
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ph12: %f. Ph13: %f. Ph23: %f. Ph1: %f. Ph2: %f. Ph3: %f. DCLink: %f. Offset: %f. \r\n", val1, val2, val3 ,val4, val5, val6, DCLink, Offset);
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f.\r\n", P, Q);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Uab: %f. Uac: %f. Ubc: %f. Ia: %f. Ib: %f. Ic: %f. DCLink: %f. Offset: %f. \r\n", Uab, Uac, Ubc ,Ia, Ib, Ic, DCLink, Offset);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f. PF: %f DCLink: %f.\r\n", P, Q, powerFactor(P, Q), DCLink);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %f. UbRMS: %f. UcRMS: %f,\r\n", UaRMS, UbRMS, UcRMS);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "IaRMS: %f. IbRMS: %f. IcRMS: %f,\r\n", IaRMS, IbRMS, IcRMS);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ud: %f. Uq: %f.\r\n", Ud, Uq);
+
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL theta: %f. (angle-theta): %f\r\n", angle, Theta, temp);
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Eg: %f. R: %f. X: %f. Error: %f.\r\n", GridEsti[0].Eg, GridEsti[0].R, GridEsti[0].X, GridEsti[0].Error);
 		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
 		TIM2_falg = 0;
+		temp = 0;
 
-}
+
+
+	}
+	else if (TIM2_falg > temp){
+		temp = TIM2_falg;
+
+		Uab = Voltage_Ph12(Uab);
+		Uac = Voltage_Ph13(Uac);
+		Ubc = Voltage_Ph23(Ubc);
+		//phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
+
+		Ia = Current_Ph1(Ia);
+		Ib = Current_Ph2(Ib);
+		Ic = Current_Ph3(Ic);
+
+		phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
+		//simpClarkeParkTrans(Ua, Ub, Uc, angle, &Ud, &Uq);
+
+		//dqPLL(Uab, Ubc, -Uac, &Theta, &Ud);
+		//dqPLL(Uab, Uac, Ubc, &Theta, &Ud);
+
+		instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
+		calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
+		//calcRMS(&IaRMS, &IbRMS, &IcRMS, Ia, Ib, Ic);
+
+
+	}
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -227,9 +291,9 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
-  RCC_OscInitStruct.PLL.PLLM = 16;
-  RCC_OscInitStruct.PLL.PLLN = 336;
-  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV4;
+  RCC_OscInitStruct.PLL.PLLM = 8;
+  RCC_OscInitStruct.PLL.PLLN = 84;
+  RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
@@ -244,7 +308,7 @@ void SystemClock_Config(void)
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
   RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
+  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
   if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
   {
@@ -620,7 +684,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 	    }
 	    svm_block(Mi, angle, &PWM1, &PWM2, &PWM3);
 
-
 	    TIM1->CCR1 = PWM1;
 	    TIM1->CCR2 = PWM2;
 	    TIM1->CCR3 = PWM3;
@@ -631,15 +694,7 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 	}
 
 	if(htim->Instance==TIM2){
-		Uab = Voltage_Ph12(Uab);
-		Uac = Voltage_Ph13(Uac);
-		Ubc = Voltage_Ph23(Ubc);
-
-		Ia = Current_Ph1(Ia);
-		Ib = Current_Ph2(Ib);
-		Ic = Current_Ph3(Ic);
 		TIM2_falg++;
-
 	}
 	else{
 	}

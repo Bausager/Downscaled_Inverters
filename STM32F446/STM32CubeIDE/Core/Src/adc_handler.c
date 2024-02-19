@@ -7,18 +7,15 @@
 /* Includes ------------------------------------------------------------------*/
 #include "adc_handler.h"
 
-// Making this const because these settings doesnt change and therefore dont need to be in RAM but in flash. Hints const..
-const uint32_t ADC_channels[16] = {ADC_CHANNEL_0,ADC_CHANNEL_1,ADC_CHANNEL_2,ADC_CHANNEL_3,
-							 ADC_CHANNEL_4,ADC_CHANNEL_5, ADC_CHANNEL_6, ADC_CHANNEL_7,
-							 ADC_CHANNEL_8, ADC_CHANNEL_9, ADC_CHANNEL_10,ADC_CHANNEL_11,
-							 ADC_CHANNEL_12,ADC_CHANNEL_13,ADC_CHANNEL_14,ADC_CHANNEL_15};
+const uint32_t ADC_channels[16] = {ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2, ADC_CHANNEL_3, ADC_CHANNEL_4, ADC_CHANNEL_5, ADC_CHANNEL_6, ADC_CHANNEL_7, ADC_CHANNEL_8, ADC_CHANNEL_9,
+									ADC_CHANNEL_10, ADC_CHANNEL_11, ADC_CHANNEL_12, ADC_CHANNEL_13, ADC_CHANNEL_14, ADC_CHANNEL_15};
 
-uint8_t ADC_Selector(uint8_t ADC_number, uint8_t channel){
+uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	ADC_ChannelConfTypeDef sConfig = {0};
 	sConfig.Rank = 1;
-	sConfig.SamplingTime = ADC_SAMPLETIME_56CYCLES;
-	sConfig.Channel = ADC_channels[channel];
-
+	sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
+	sConfig.Channel = ADC_channels[Channal];
+	
 	if(ADC_number == 1){
 		if(HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK){
 			Error_Handler();
@@ -33,6 +30,9 @@ uint8_t ADC_Selector(uint8_t ADC_number, uint8_t channel){
 		if(HAL_ADC_ConfigChannel(&hadc3, &sConfig) != HAL_OK){
 			Error_Handler();
 		}
+	}
+	else{
+		Error_Handler();
 	}
 	return HAL_OK;
 }
@@ -59,7 +59,7 @@ uint32_t adc_voltage_ph12(){
 }
 uint32_t adc_voltage_ph13(){
 
-	ADC_Selector(2,13);
+	ADC_Selector(2,12);
 
 	// Start ADC Conversion
 	if(HAL_ADC_Start(&hadc2) != HAL_OK) {

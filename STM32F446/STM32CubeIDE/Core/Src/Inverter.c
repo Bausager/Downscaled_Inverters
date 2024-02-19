@@ -80,9 +80,9 @@ uint8_t svm_block(float modulation_idx, float angle_rad, float* tim_1, float* ti
     	return HAL_ERROR;
     }
 
-	t_1 = floorf((t_1)*(svm_period_scaler) + 0.5); // Update compare values
-	t_2 = floorf((t_2)*(svm_period_scaler) + 0.5); // Update compare values
-	t_3 = floorf((t_3)*(svm_period_scaler) + 0.5); // Update compare values
+	t_1 = floorf((t_1)*(svm_period_scaler) + 0.5f); // Update compare values
+	t_2 = floorf((t_2)*(svm_period_scaler) + 0.5f); // Update compare values
+	t_3 = floorf((t_3)*(svm_period_scaler) + 0.5f); // Update compare values
 
     if(t_1 > svm_AutoReloadRegister){
     	t_1 = svm_AutoReloadRegister;

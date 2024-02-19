@@ -86,7 +86,6 @@ uint8_t TIM_freq(uint8_t htim, float Hz){
 	/*** Timer 2 ***/
 	// See page 139 - RCC APB1 peripheral reset register (RCC_APB1RSTR)
 	else if (htim == 2) {
-
 		// Finds the Timer Clock Frequency.
 		if ((RCC->CFGR & RCC_CFGR_PPRE1) != 0) {
 			PCLKx_timer_clocks[PCLK1] = PCLKx_timer_clocks[PCLK1]*2.0f;

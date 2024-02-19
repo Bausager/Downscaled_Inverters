@@ -10,7 +10,7 @@
 
 
 /* Puplic variables ---------------------------------------------------------*/
-
+static float temp;
 
 // https://en.wikipedia.org/wiki/Exponential_smoothing
 float exponentialFilter(float alpha, float avg, float value){
@@ -20,5 +20,12 @@ float exponentialFilter(float alpha, float avg, float value){
 	else{
 		return ((alpha*avg) + ((1.0f-alpha)*value));
 	}
+
+}
+
+float RMSFilter(float rmsFilterLength, float rmsValue, float newValue){
+	temp = sqrt(newValue * newValue);
+	return exponentialFilter(1 - rmsFilterLength, rmsValue, temp);
+	//return sqrtf(newValue*newValue*rmsFilterLength);
 
 }
