@@ -80,9 +80,10 @@ uint32_t TIM2_falg = 0;
 float temp = 0;
 int8_t tempFalg = 0;
 #define Max_Samples 4
+#define M 100
 
 struct gridMeasValues GridMeas[Max_Samples];
-struct GridEstimationValues GridEsti[Max_Samples];
+struct GridEstimationValues GridEsti[M];
 
 /* USER CODE END PV */
 
@@ -164,7 +165,7 @@ TIM_freq(2, sample_feq);
 //writeValueToUART(TIM2->PSC);
 //writeValueToUART(TIM2->ARR);
 
-InitiliseGridStruct(Max_Samples, GridEsti);
+InitiliseGridStruct(M, GridEsti);
 setVoltageFilterCoeff(0.5);
 setCurrentFilterCoeff(0);
 setPowerFilterCoeff(0.99);
@@ -181,20 +182,20 @@ for (int i = 0; i < (uint32_t)(nom_f * 50); ++i) {
 HAL_TIM_Base_Start_IT(&htim1);
 HAL_TIM_Base_Start_IT(&htim2);
 
-GridMeas[tempFalg].Vn = 10.29;
-GridMeas[tempFalg].Vn = 13.68;
-GridMeas[tempFalg].Vn = 17.10;
-GridMeas[tempFalg].Vn = 20.52;
+GridMeas[0].Vn = 10.29;
+GridMeas[1].Vn = 13.68;
+GridMeas[2].Vn = 17.10;
+GridMeas[3].Vn = 20.52;
 
-GridMeas[tempFalg].Pn = 20.65;
-GridMeas[tempFalg].Pn = 36.71;
-GridMeas[tempFalg].Pn = 57.36;
-GridMeas[tempFalg].Pn = 82.60;
+GridMeas[0].Pn = 20.65;
+GridMeas[1].Pn = 36.71;
+GridMeas[2].Pn = 57.36;
+GridMeas[3].Pn = 82.60;
 
-GridMeas[tempFalg].Qn = 3.75;
-GridMeas[tempFalg].Qn = 6.66;
-GridMeas[tempFalg].Qn = 10.41;
-GridMeas[tempFalg].Qn = 14.99;
+GridMeas[0].Qn = 3.75;
+GridMeas[1].Qn = 6.66;
+GridMeas[2].Qn = 10.41;
+GridMeas[3].Qn = 14.99;
 
 
   /* USER CODE END 2 */
@@ -219,7 +220,7 @@ GridMeas[tempFalg].Qn = 14.99;
 		}
 
 		if (tempFalg == -1) {
-			GeneticandRandomSearch(Max_Samples, GridMeas, GridEsti);
+			GeneticandRandomSearch(Max_Samples, M, GridMeas, GridEsti);
 		}
 		char outputBuffer[256];
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Uab: %f. Uac: %f. Ubc: %f. Ia: %f. Ib: %f. Ic: %f. DCLink: %f. Offset: %f. \r\n", Uab, Uac, Ubc ,Ia, Ib, Ic, DCLink, Offset);
