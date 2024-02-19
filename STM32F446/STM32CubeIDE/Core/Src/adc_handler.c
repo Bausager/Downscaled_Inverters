@@ -15,7 +15,7 @@ uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	sConfig.Rank = 1;
 	sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
 	sConfig.Channel = ADC_channels[Channal];
-
+	
 	if(ADC_number == 1){
 		if(HAL_ADC_ConfigChannel(&hadc1, &sConfig) != HAL_OK){
 			Error_Handler();
