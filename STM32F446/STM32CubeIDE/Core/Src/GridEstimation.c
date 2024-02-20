@@ -7,8 +7,8 @@
 
 #include "GridEstimation.h"
 
-static const float low = 0.99;
-static const float high = 1.01;
+static const float low = 0.990;
+static const float high = 1.001;
 static uint16_t c;
 
 void writeValueToUART1(double value){

@@ -64,17 +64,17 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 const float f_sw = 20e3;
-const float nom_f = 10.0f;
+const float nom_f = 2.0f;
 const float sample_feq = 5e3;
 float RADIAL_SPEED = (nom_f * PI2) / f_sw;
 
 float angle = 0;
-float Theta = 0;
+float Theta = 3.0;
 float PWM1, PWM2, PWM3;
 float Uab, Uac, Ubc, Ua, Ub, Uc, Ia, Ib, Ic, P, Q;
 float UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS;
 float Ud, Uq, Uz;
-float Offset, DCLink;
+float Offset, DCLink, res_angle;
 float Mi = 0.6;
 uint32_t TIM2_falg = 0;
 float temp = 0;
@@ -166,9 +166,9 @@ TIM_freq(2, sample_feq);
 //writeValueToUART(TIM2->ARR);
 
 InitiliseGridStruct(M, GridEsti);
-setVoltageFilterCoeff(0.5);
+setVoltageFilterCoeff(0);
 setCurrentFilterCoeff(0);
-setPowerFilterCoeff(0.99);
+setPowerFilterCoeff(0);
 setRMSFilterLength((uint32_t)((sample_feq/nom_f)*5.0f));
 setPIdqPLL(nom_f, sample_feq);
 
@@ -179,24 +179,9 @@ for (int i = 0; i < (uint32_t)(nom_f * 50); ++i) {
 	Offset = Voltage_Offset();
 }
 
+Theta = (((float)rand()/RAND_MAX)*(6.0f));
 HAL_TIM_Base_Start_IT(&htim1);
 HAL_TIM_Base_Start_IT(&htim2);
-
-GridMeas[0].Vn = 10.29;
-GridMeas[1].Vn = 13.68;
-GridMeas[2].Vn = 17.10;
-GridMeas[3].Vn = 20.52;
-
-GridMeas[0].Pn = 20.65;
-GridMeas[1].Pn = 36.71;
-GridMeas[2].Pn = 57.36;
-GridMeas[3].Pn = 82.60;
-
-GridMeas[0].Qn = 3.75;
-GridMeas[1].Qn = 6.66;
-GridMeas[2].Qn = 10.41;
-GridMeas[3].Qn = 14.99;
-
 
   /* USER CODE END 2 */
 
@@ -207,21 +192,9 @@ GridMeas[3].Qn = 14.99;
 
 
 	if (TIM2_falg >= sample_feq) {
-		Mi -= 0.05f;
-		if ((0 <= tempFalg) && (tempFalg < Max_Samples)) {
-			writeValueToUART(tempFalg);
-			//GridMeas[tempFalg].Vn = (UaRMS + UbRMS + UcRMS)/3.0f;
-			//GridMeas[tempFalg].Pn = -P;
-			//GridMeas[tempFalg].Qn = -Q;
-			tempFalg++;
-		}else{
-			Mi = 0.6f;
-			tempFalg = -1;
-		}
 
-		if (tempFalg == -1) {
-			GeneticandRandomSearch(Max_Samples, M, GridMeas, GridEsti);
-		}
+		//GeneticandRandomSearch(Max_Samples, M, GridMeas, GridEsti);
+
 		char outputBuffer[256];
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Uab: %f. Uac: %f. Ubc: %f. Ia: %f. Ib: %f. Ic: %f. DCLink: %f. Offset: %f. \r\n", Uab, Uac, Ubc ,Ia, Ib, Ic, DCLink, Offset);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f. PF: %f DCLink: %f.\r\n", P, Q, powerFactor(P, Q), DCLink);
@@ -229,8 +202,15 @@ GridMeas[3].Qn = 14.99;
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "IaRMS: %f. IbRMS: %f. IcRMS: %f,\r\n", IaRMS, IbRMS, IcRMS);
 		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ud: %f. Uq: %f.\r\n", Ud, Uq);
 
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL theta: %f. (angle-theta): %f\r\n", angle, Theta, temp);
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Eg: %f. R: %f. X: %f. Error: %f.\r\n", GridEsti[0].Eg, GridEsti[0].R, GridEsti[0].X, GridEsti[0].Error);
+		if (Theta < angle) {
+			//res_angle = (Theta + 6.2831853072f) - angle;
+			res_angle = Theta - angle;
+		}else{
+			res_angle = Theta - angle;
+		}
+
+		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL theta: %f. (angle-theta): %f. Ud: %f\r\n", angle, Theta, res_angle, Ud);
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Eg: %f. R: %f. X: %f. Error: %f. W: %f.\r\n", GridEsti[0].Eg, GridEsti[0].R, GridEsti[0].X, GridEsti[0].Error, (0.999 + (((float)rand()/RAND_MAX)*(1.001 - 0.999))));
 		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
 		TIM2_falg = 0;
 		temp = 0;
@@ -252,12 +232,12 @@ GridMeas[3].Qn = 14.99;
 
 		phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
 		//simpClarkeParkTrans(Ua, Ub, Uc, angle, &Ud, &Uq);
-
 		//dqPLL(Uab, Ubc, -Uac, &Theta, &Ud);
-		//dqPLL(Uab, Uac, Ubc, &Theta, &Ud);
+		dqPLL(Ua, Ub, Uc, &Theta, &Ud);
 
-		instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
-		calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
+
+		//instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
+		//calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
 		//calcRMS(&IaRMS, &IbRMS, &IcRMS, Ia, Ib, Ic);
 
 

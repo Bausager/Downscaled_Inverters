@@ -44,8 +44,10 @@ uint8_t clarkeTransInv(float Ualpha, float Ubeta, float Ugamma,float* Ua, float*
 }
 
 uint8_t simpClarkeTrans(float Ua, float Ub, float Uc, float* Ualpha, float* Ubeta){
-	*Ualpha = (Const1*Ua) + (-Const4*Ub) + (-Const4*Uc);
-	*Ubeta = (Const5*Ub) + (-Const5*Uc);
+	//*Ualpha = (2.0f/3.0f)*(Ua + (-0.5*Ub) + (-0.5*Uc));
+	//*Ubeta = (2.0f/3.0f)*(((sqrtf(3.0f)/2.0f)*Ub) + (-(sqrtf(3.0f)/2.0f)*Uc));
+	*Ualpha = sqrtf(2.0f/3.0f)*((Ua) + (-0.5*Ub) + (-0.5*Uc));
+	*Ubeta = sqrtf(2.0f/3.0f)*(((sqrtf(3.0f)/2.0f)*Ub) + (-(sqrtf(3.0f)/2.0f)*Uc));
 
 	return HAL_OK;
 }
