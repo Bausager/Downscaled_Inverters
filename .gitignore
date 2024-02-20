@@ -7,6 +7,7 @@
 # Using wildcards
 *.zip
 *.pdf
+*.png
 
 
 #Debug
