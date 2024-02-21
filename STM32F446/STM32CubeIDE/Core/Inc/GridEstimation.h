@@ -9,31 +9,43 @@
 #define INC_GRIDESTIMATION_H_
 /* Includes ------------------------------------------------------------------*/
 #include <main.h>
-#include "math.h"
-#include <stdlib.h>
+#include "math.h" // Need for powf()
+#include <stdlib.h> // Need for RAND_MAX
 
-#include <string.h> // sprintf
-#include <stdio.h> // input/output
-
-extern UART_HandleTypeDef huart2;
-
-struct gridMeasValues{
+/*
+ * GridEstiMeas
+ * struct for grid measurements
+ * float Vn: Voltage RMS. Could do and average over a, b and c.
+ * float Pn: Active Power
+ * float Qn: Reactive Power
+ */
+struct GridEstiMeas{
 	float Vn;
 	float Pn;
 	float Qn;
 };
 
-struct GridEstimationValues{
+
+/*
+ * GridEstiVari
+ * struct for grid estimations
+ * float Eg: Grid RMS Voltage
+ * float R: Grid Resistance
+ * float X: Grid Reactance
+ * float Error: Reactive Power
+ */
+struct GridEstiVari{
 	float Eg;
 	float R;
 	float X;
 	float Error;
 };
-void writeValueToUART1(double value);
-uint8_t InitiliseGridStruct(uint16_t N, struct GridEstimationValues* values);
-uint8_t argsort(uint16_t N, struct GridEstimationValues* values);
-uint8_t costFunctionJ(uint16_t M, struct gridMeasValues* measVal, struct GridEstimationValues* EstiVal);
-uint8_t GeneticandRandomSearch(uint16_t N, uint16_t M, struct gridMeasValues* measVal, struct GridEstimationValues* EstiVal);
+
+
+uint8_t InitiliseGridStruct(uint16_t N, struct GridEstiVari* values);
+uint8_t argsort(uint16_t N, struct GridEstiVari* values);
+uint8_t costFunctionJ(uint16_t M, struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal);
+uint8_t GeneticandRandomSearch(uint16_t N, uint16_t M, struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal);
 
 
 

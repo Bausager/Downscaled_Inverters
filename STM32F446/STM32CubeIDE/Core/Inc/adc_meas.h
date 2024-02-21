@@ -16,23 +16,23 @@
 
 
 
-uint8_t setVoltageFilterCoeff(float coeff);
-uint8_t setCurrentFilterCoeff(float coeff);
+uint8_t Voltage_Filter_Coeff(float coeff);
+uint8_t Current_Filter_Coeff(float coeff);
 
-float ADCtoValue(uint32_t rawValue);
-float PhaseVoltageConversion(float rawValue);
-float PhaseCurrentConversion(float rawValue);
+float ADC_to_Value(uint32_t rawValue);
+float Voltage_Conversion(float rawValue);
+float Current_Conversion(float rawValue);
 
 float Voltage_Offset();
 float Voltage_DCLink();
 
-float Voltage_Ph12(float oldMeas);
-float Voltage_Ph13(float oldMeas);
-float Voltage_Ph23(float oldMeas);
+float meas_Uab(float oldMeas);
+float meas_Uac(float oldMeas);
+float meas_Ubc(float oldMeas);
 
 
-float Current_Ph1(float oldMeas);
-float Current_Ph2(float oldMeas);
-float Current_Ph3(float oldMeas);
+float meas_Ia(float oldMeas);
+float meas_Ib(float oldMeas);
+float meas_Ic(float oldMeas);
 
 #endif /* INC_ADC_MEAS_H_ */

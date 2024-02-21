@@ -10,12 +10,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "math.h"
 
-/* Puplic variables ---------------------------------------------------------*/
-
-
-float exponentialFilter(float alpha, float avg, float value);
-float RMSFilter(float rmsFilterLength, float rmsValue, float newValue);
+float exponential_Filter(float alpha, float oldMeas, float newMeas);
+float RMS_Filter(float rmsFilterLength, float rmsValue, float newValue);
 
 
 #endif /* INC_FILTER_H_ */

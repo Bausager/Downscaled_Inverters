@@ -30,9 +30,11 @@
 #include "GridEstimation.h"
 
 
-//#include <math.h>
-#include <string.h> // sprintf
+
+#include <string.h> // sprintf(...)
 #include <stdio.h> // input/output
+#include <stdbool.h> // Boolean data type
+
 //#include <stdlib.h> //
 
 /* USER CODE END Includes */
@@ -63,27 +65,52 @@ TIM_HandleTypeDef htim2;
 UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
+// Switching- , Nominal grid - and Sample frequency
 const float f_sw = 20e3;
-const float nom_f = 2.0f;
-const float sample_feq = 5e3;
-float RADIAL_SPEED = (nom_f * PI2) / f_sw;
+const float nominal_freq = 50.0f;
+const float sample_freq = 5e3;
 
-float angle = 0;
-float Theta = 3.0;
-float PWM1, PWM2, PWM3;
-float Uab, Uac, Ubc, Ua, Ub, Uc, Ia, Ib, Ic, P, Q;
-float UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS;
-float Ud, Uq, Uz;
-float Offset, DCLink, res_angle;
+// Flags
+bool TIM2_falg = false; // Flag for TIM2 (increases with sample_freq)
+uint32_t TIM2_flag_acumulator = 0; // Helper for TIM2_falg
+
+// Radial speed for Grid Forming
+const float RADIAL_SPEED = (nominal_freq * PI2) / f_sw;
+
+// Modulation index, PWM and angle variables for SVM
 float Mi = 0.6;
-uint32_t TIM2_falg = 0;
-float temp = 0;
-int8_t tempFalg = 0;
-#define Max_Samples 4
-#define M 100
+float PWM1, PWM2, PWM3;
+float angle = 0;
+float theta = 0;	// angle and theta is the same, but running both a PLL while grid forming, we need an angle for both (angle->SVM, theta->PLL)
+float residiual_angle = 0; // angle difference to verify PLL with calculations.
 
-struct gridMeasValues GridMeas[Max_Samples];
-struct GridEstimationValues GridEsti[M];
+// Voltage variables
+float Uab, Uac, Ubc;
+float Ua, Ub, Uc;
+float UaRMS, UbRMS, UcRMS;
+float Ualpha, Ubeta, Ugamma;
+float Ud, Uq, Uz;
+
+// Current variables
+float Ia, Ib, Ic;
+float IaRMS, IbRMS, IcRMS;
+float Ialpha, Ibeta, Igamma;
+float Id, Iq, Iz;
+
+// Power variables
+float P, Q, S, Pf;
+
+// Offset voltage for ADC and DC-Link voltage
+float Offset, DCLink;
+
+// Length of arrays
+#define GridMeasNSamples 25 // Amount of stored measured samples for grid estimation
+#define GridEstiNSamples 10 // Amount of estimating samples for grid estimation
+
+// Grid Estimation
+struct GridEstiMeas GridMeasValues[GridMeasNSamples]; // Stored measured samples for grid estimation
+struct GridEstiVari GridEstiValues[GridEstiNSamples]; // Stored estimated samples for grid estimation
+
 
 /* USER CODE END PV */
 
@@ -102,15 +129,14 @@ static void MX_TIM2_Init(void);
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+/*
+ * Function for simple UART write (mainly used for simple debugging)
+ */
 void writeValueToUART(double value){
 	char outputBuffer[256];
 	uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Value: %f \r\n", value);
 	HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
 }
-
-
-
-
 /* USER CODE END 0 */
 
 /**
@@ -149,40 +175,59 @@ int main(void)
   MX_TIM2_Init();
   /* USER CODE BEGIN 2 */
 
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
-HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
-HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
-HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
-HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
+/*
+ * Starting PWM output channels
+ */
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_1);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_2);
+  HAL_TIM_PWM_Start(&htim1, TIM_CHANNEL_3);
+  HAL_TIMEx_PWMN_Start(&htim1, TIM_CHANNEL_3);
+
+  /*
+   * Configure timer interrupts for switching and sampling
+   */
+  TIM_freq(1, f_sw);
+  TIM_freq(2, sample_freq);
+
+  /*
+   * Initialise SVM with timer information
+   */
+  svm_block_init(TIM1->ARR, f_sw);
 
 
+  /*
+   * Initialise PLL
+   */
+  setPIdqPLL(nominal_freq, sample_freq);
 
-TIM_freq(1, f_sw);
-//writeValueToUART(TIM1->PSC);
-//writeValueToUART(TIM1->ARR);
-TIM_freq(2, sample_feq);
-//writeValueToUART(TIM2->PSC);
-//writeValueToUART(TIM2->ARR);
+  /*
+   * Initialise Grid estimation variables
+   */
+  InitiliseGridStruct(GridEstiNSamples, GridEstiValues);
 
-InitiliseGridStruct(M, GridEsti);
-setVoltageFilterCoeff(0);
-setCurrentFilterCoeff(0);
-setPowerFilterCoeff(0);
-setRMSFilterLength((uint32_t)((sample_feq/nom_f)*5.0f));
-setPIdqPLL(nom_f, sample_feq);
+  /*
+   *  Set filter coefficients for measurements
+   */
+  Voltage_Filter_Coeff(0); // Set voltage measurement coefficients
+  Current_Filter_Coeff(0); // Set current measurement coefficients
+  setPowerFilterCoeff(0);	// Set power calculation coefficients (optional)
+  setRMSFilterLength((uint32_t)((sample_freq/nominal_freq)*5.0f)); // Set RMS filter coefficients to 5 periods of nominal_freq
 
-svm_block_init(TIM1->ARR, f_sw);
+  /*
+   * Initial measurement for ADC Offset and DC Link voltage
+   */
+  for (int i = 0; i < (uint32_t)10e3; ++i) {
+	  DCLink = Voltage_DCLink();
+	  Offset = Voltage_Offset();
+  }
 
-for (int i = 0; i < (uint32_t)(nom_f * 50); ++i) {
-	DCLink = Voltage_DCLink();
-	Offset = Voltage_Offset();
-}
-
-Theta = (((float)rand()/RAND_MAX)*(6.0f));
-HAL_TIM_Base_Start_IT(&htim1);
-HAL_TIM_Base_Start_IT(&htim2);
-
+  /*
+   *  Start TIM1 and TIM2 Interrupts!
+   */
+  HAL_TIM_Base_Start_IT(&htim1);
+  HAL_TIM_Base_Start_IT(&htim2);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -190,58 +235,54 @@ HAL_TIM_Base_Start_IT(&htim2);
   while (1)
   {
 
+	  /*
+	   * Runs every 1/sample_freq
+	   */
+	  if (TIM2_falg) {
+		  TIM2_falg = false;
 
-	if (TIM2_falg >= sample_feq) {
-
-		//GeneticandRandomSearch(Max_Samples, M, GridMeas, GridEsti);
-
-		char outputBuffer[256];
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Uab: %f. Uac: %f. Ubc: %f. Ia: %f. Ib: %f. Ic: %f. DCLink: %f. Offset: %f. \r\n", Uab, Uac, Ubc ,Ia, Ib, Ic, DCLink, Offset);
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %f. Q: %f. PF: %f DCLink: %f.\r\n", P, Q, powerFactor(P, Q), DCLink);
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %f. UbRMS: %f. UcRMS: %f,\r\n", UaRMS, UbRMS, UcRMS);
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "IaRMS: %f. IbRMS: %f. IcRMS: %f,\r\n", IaRMS, IbRMS, IcRMS);
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Ud: %f. Uq: %f.\r\n", Ud, Uq);
-
-		if (Theta < angle) {
-			//res_angle = (Theta + 6.2831853072f) - angle;
-			res_angle = Theta - angle;
-		}else{
-			res_angle = Theta - angle;
-		}
-
-		uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "angle: %f. PLL theta: %f. (angle-theta): %f. Ud: %f\r\n", angle, Theta, res_angle, Ud);
-		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "Eg: %f. R: %f. X: %f. Error: %f. W: %f.\r\n", GridEsti[0].Eg, GridEsti[0].R, GridEsti[0].X, GridEsti[0].Error, (0.999 + (((float)rand()/RAND_MAX)*(1.001 - 0.999))));
-		HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 1000);
-		TIM2_falg = 0;
-		temp = 0;
+		  Uab = meas_Uab(Uab);
+		  Uac = meas_Uac(Uac);
+		  Ubc = meas_Ubc(Ubc);
+		  phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
 
 
+		  Ia = meas_Ia(Ia);
+		  Ib = meas_Ib(Ib);
+		  Ic = meas_Ic(Ic);
 
-	}
-	else if (TIM2_falg > temp){
-		temp = TIM2_falg;
-
-		Uab = Voltage_Ph12(Uab);
-		Uac = Voltage_Ph13(Uac);
-		Ubc = Voltage_Ph23(Ubc);
-		//phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
-
-		Ia = Current_Ph1(Ia);
-		Ib = Current_Ph2(Ib);
-		Ic = Current_Ph3(Ic);
-
-		phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
-		//simpClarkeParkTrans(Ua, Ub, Uc, angle, &Ud, &Uq);
-		//dqPLL(Uab, Ubc, -Uac, &Theta, &Ud);
-		dqPLL(Ua, Ub, Uc, &Theta, &Ud);
+		  instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
+		  calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
+		  calcRMS(&IaRMS, &IbRMS, &IcRMS, Ia, Ib, Ic);
 
 
-		//instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
-		//calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
-		//calcRMS(&IaRMS, &IbRMS, &IcRMS, Ia, Ib, Ic);
+		  dqPLL(Ua, Ub, Uc, &theta, &Ud);
 
 
-	}
+		  if(TIM2_flag_acumulator < GridMeasNSamples){
+			  GridMeasValues[TIM2_flag_acumulator].Pn = sqrtf(P*P);
+			  GridMeasValues[TIM2_flag_acumulator].Qn = sqrtf(Q*Q);
+			  GridMeasValues[TIM2_flag_acumulator].Vn = (UaRMS + UbRMS + UcRMS)/3.0f;
+		  }
+
+
+		  /*
+		   * Runs every second
+		   */
+		  if (TIM2_flag_acumulator >= sample_freq) {
+			  TIM2_flag_acumulator = 0;
+
+			  residiual_angle = angle - theta;
+
+			  GeneticandRandomSearch(GridMeasNSamples, GridEstiNSamples, GridMeasValues, GridEstiValues);
+
+			  char outputBuffer[256];
+			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.2f. IbRMS: %.2f. IcRMS: %.2f. P: %.2f. Q: %.2f. X: %.2f. R: %.2f. Eg: %.2f. Error: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, GridEstiValues[0].X, GridEstiValues[0].R, GridEstiValues[0].Eg, GridEstiValues[0].Error, angle, theta, residiual_angle);
+			  HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
+		  }
+		  TIM2_flag_acumulator++;
+
+	  }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -261,7 +302,7 @@ void SystemClock_Config(void)
   /** Configure the main internal regulator output voltage
   */
   __HAL_RCC_PWR_CLK_ENABLE();
-  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE3);
+  __HAL_PWR_VOLTAGESCALING_CONFIG(PWR_REGULATOR_VOLTAGE_SCALE1);
 
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
@@ -272,11 +313,18 @@ void SystemClock_Config(void)
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
   RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
   RCC_OscInitStruct.PLL.PLLM = 8;
-  RCC_OscInitStruct.PLL.PLLN = 84;
+  RCC_OscInitStruct.PLL.PLLN = 180;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 2;
   RCC_OscInitStruct.PLL.PLLR = 2;
   if (HAL_RCC_OscConfig(&RCC_OscInitStruct) != HAL_OK)
+  {
+    Error_Handler();
+  }
+
+  /** Activate the Over-Drive mode
+  */
+  if (HAL_PWREx_EnableOverDrive() != HAL_OK)
   {
     Error_Handler();
   }
@@ -287,10 +335,10 @@ void SystemClock_Config(void)
                               |RCC_CLOCKTYPE_PCLK1|RCC_CLOCKTYPE_PCLK2;
   RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
   RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV2;
+  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV4;
   RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV2;
 
-  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_2) != HAL_OK)
+  if (HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_5) != HAL_OK)
   {
     Error_Handler();
   }
@@ -657,7 +705,9 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 
 	if(htim->Instance==TIM1){
-		//writeValueToUART(1);
+		/*
+		 * Calculating SVM PWM
+		 */
 		angle = angle + RADIAL_SPEED;
 	    if (angle > 6.2831853072f){
 	    	angle = angle - 6.2831853072f;
@@ -667,18 +717,14 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 	    TIM1->CCR1 = PWM1;
 	    TIM1->CCR2 = PWM2;
 	    TIM1->CCR3 = PWM3;
-
-
-	}
-	else{
 	}
 
 	if(htim->Instance==TIM2){
-		TIM2_falg++;
+		/*
+		 * TIM2_falg to use in main-loop so it doesn't clog up the SVM.
+		 */
+		TIM2_falg = true;
 	}
-	else{
-	}
-
 }
 
 

@@ -13,9 +13,9 @@ static const float oneOverSqrt3 = 1.0f/sqrtf(3.0f);
 static float powerFilterCoeff, rmsFilterLength;
 
 uint8_t calcRMS(float* UaRMS, float* UbRMS, float* UcRMS, float Ua, float Ub, float Uc){
-	*UaRMS = RMSFilter(rmsFilterLength, *UaRMS, Ua);
-	*UbRMS = RMSFilter(rmsFilterLength, *UbRMS, Ub);
-	*UcRMS = RMSFilter(rmsFilterLength, *UcRMS, Uc);
+	*UaRMS = RMS_Filter(rmsFilterLength, *UaRMS, Ua);
+	*UbRMS = RMS_Filter(rmsFilterLength, *UbRMS, Ub);
+	*UcRMS = RMS_Filter(rmsFilterLength, *UcRMS, Uc);
 	return HAL_OK;
 }
 
@@ -30,8 +30,8 @@ uint8_t setPowerFilterCoeff(float coeff){
 }
 
 uint8_t instantaneousPower(float Ua, float Ub, float Uc, float Ia, float Ib, float Ic, float* P, float* Q){
-	*P = exponentialFilter(powerFilterCoeff, *P, (Ua*Ia) + (Ub*Ib) + (Uc*Ic));
-	*Q = exponentialFilter(powerFilterCoeff, *Q, oneOverSqrt3*((Ia*(Uc-Ub)) + (Ib*(Ua-Uc)) - (Ic*(Ub-Ua))));
+	*P = exponential_Filter(powerFilterCoeff, *P, (Ua*Ia) + (Ub*Ib) + (Uc*Ic));
+	*Q = exponential_Filter(powerFilterCoeff, *Q, oneOverSqrt3*((Ia*(Uc-Ub)) + (Ib*(Ua-Uc)) - (Ic*(Ub-Ua))));
 
 	return HAL_OK;
 }
