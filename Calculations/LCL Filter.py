@@ -16,6 +16,7 @@ Rf = (0.000000000001 * 4)
 H_LCL1 = signal.TransferFunction([1],[(Li*Lg*Cf), 0, (Li*Lg), 0])
 H_LCL2 = signal.TransferFunction([Rf*Cf, 1], [(Lg*Li*Cf), (Cf*(Lg*(Rf+Ri) + Li*(Rf+Rg))), (Lg+Li+Cf*(Rf*Rg + Rf*Ri + Rg*Ri)), Rg+Ri])
 
+print(H_LCL2)
 resonance_angular_freq = np.sqrt((Li+Lg)/(Li*Lg*Cf))
 
 w = np.linspace(0.1, 10000, num=100, endpoint=True)
