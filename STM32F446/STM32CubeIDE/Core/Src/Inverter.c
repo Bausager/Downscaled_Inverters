@@ -10,12 +10,19 @@
 #include "Inverter.h"
 
 
-/* Puplic variables ---------------------------------------------------------*/
+/*
+ * Variables for SVM
+ */
 static float svm_period_scaler, svm_T_sw;
 static uint32_t svm_AutoReloadRegister;
 
 
-
+/*
+ * svm_block_init
+ * Input:
+ * uint32_t AutoReloadRegister: AutoReloadRegister for the timer used for the PWM e.g; TIM1->ARR.
+ * float Freq: the switching frequency.
+ */
 uint8_t svm_block_init(uint32_t AutoReloadRegister, float Freq){
 	svm_T_sw = 1.0f/Freq;
 	svm_period_scaler = AutoReloadRegister/svm_T_sw;
@@ -23,6 +30,16 @@ uint8_t svm_block_init(uint32_t AutoReloadRegister, float Freq){
 	return HAL_OK;
 }
 
+
+/*
+ * svm_block
+ * Input:
+ * float modulation_idx: Modulation index.
+ * float angle_rad: Grid angle in radians.
+ * float* tim_1: Timer compare/interrupt register for first channel e.g; TIM1->CCR1.
+ * float* tim_2: Timer compare/interrupt register for second channel e.g; TIM1->CCR2.
+ * float* tim_3: Timer compare/interrupt register for third channel e.g; TIM1->CCR3.
+ */
 uint8_t svm_block(float modulation_idx, float angle_rad, float* tim_1, float* tim_2, float* tim_3){
 
 	float svm_angle = angle_rad - (floorf(angle_rad/FULL_CIRCLE)*FULL_CIRCLE);

@@ -67,7 +67,7 @@ UART_HandleTypeDef huart2;
 /* USER CODE BEGIN PV */
 // Switching- , Nominal grid - and Sample frequency
 const float f_sw = 20e3;
-const float nominal_freq = 50.0f;
+const float nominal_freq = 10.0f;
 const float sample_freq = 5e3;
 
 // Flags
@@ -85,7 +85,8 @@ float theta = 0;	// angle and theta is the same, but running both a PLL while gr
 float residiual_angle = 0; // angle difference to verify PLL with calculations.
 
 // Voltage variables
-float Uab, Uac, Ubc;
+float Uab, Ubc, Uca;
+float UabRMS, UbcRMS, UcaRMS;
 float Ua, Ub, Uc;
 float UaRMS, UbRMS, UcRMS;
 float Ualpha, Ubeta, Ugamma;
@@ -99,13 +100,14 @@ float Id, Iq, Iz;
 
 // Power variables
 float P, Q, S, Pf;
+float P_RMS, Q_RMS, S_RMS, Pf_RMS;
 
 // Offset voltage for ADC and DC-Link voltage
 float Offset, DCLink;
 
 // Length of arrays
-#define GridMeasNSamples 25 // Amount of stored measured samples for grid estimation
-#define GridEstiNSamples 10 // Amount of estimating samples for grid estimation
+#define GridMeasNSamples 10 // Amount of stored measured samples for grid estimation
+#define GridEstiNSamples 4 // Amount of estimating samples for grid estimation
 
 // Grid Estimation
 struct GridEstiMeas GridMeasValues[GridMeasNSamples]; // Stored measured samples for grid estimation
@@ -210,10 +212,10 @@ int main(void)
   /*
    *  Set filter coefficients for measurements
    */
-  Voltage_Filter_Coeff(0); // Set voltage measurement coefficients
-  Current_Filter_Coeff(0); // Set current measurement coefficients
-  setPowerFilterCoeff(0);	// Set power calculation coefficients (optional)
-  setRMSFilterLength((uint32_t)((sample_freq/nominal_freq)*5.0f)); // Set RMS filter coefficients to 5 periods of nominal_freq
+  Voltage_Filter_Length(10); // Set voltage measurement coefficients
+  Current_Filter_Length(10); // Set current measurement coefficients
+  Power_Filter_Length(10);	// Set power calculation coefficients (optional)
+  RMS_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set RMS filter coefficients to 5 periods of nominal_freq
 
   /*
    * Initial measurement for ADC Offset and DC Link voltage
@@ -241,19 +243,25 @@ int main(void)
 	  if (TIM2_falg) {
 		  TIM2_falg = false;
 
+		  Voltage_Offset();
+
 		  Uab = meas_Uab(Uab);
-		  Uac = meas_Uac(Uac);
 		  Ubc = meas_Ubc(Ubc);
-		  phaseNeutralCalc(Uab, Uac, Ubc, &Ua, &Ub, &Uc);
+		  Uca = -meas_Uac(Uca);
+
+		  calc_Uxx_to_Uxn(Uab, Ubc, Uca, &Ua, &Ub, &Uc);
+
+
 
 
 		  Ia = meas_Ia(Ia);
 		  Ib = meas_Ib(Ib);
 		  Ic = meas_Ic(Ic);
 
-		  instantaneousPower(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
-		  calcRMS(&UaRMS, &UbRMS, &UcRMS, Ua, Ua, Ub);
-		  calcRMS(&IaRMS, &IbRMS, &IcRMS, Ia, Ib, Ic);
+		  calc_Instantaneous_Power(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
+
+		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
+		  calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
 
 
 		  dqPLL(Ua, Ub, Uc, &theta, &Ud);

@@ -25,7 +25,7 @@ static float temp;
  *
  * more information: https://en.wikipedia.org/wiki/Exponential_smoothing
  */
-float exponential_Filter(float alpha, float oldMeas, float newMeas){
+float exponential_Filter(float alpha, float newMeas, float oldMeas){
 	// If filter coefficient is <=0, disable filter
 	if (alpha <= 0) {
 		return newMeas;
@@ -49,6 +49,6 @@ float RMS_Filter(float rmsFilterLength, float rmsValue, float newMeas){
 	// Calculate the Root-Squre
 	temp = sqrtf(newMeas * newMeas);
 	// Use exponential_Filter with a long filter length for RMS accumulation (multiply periods).
-	return exponential_Filter(1 - rmsFilterLength, rmsValue, temp);
+	return exponential_Filter(rmsFilterLength, temp, rmsValue);
 
 }

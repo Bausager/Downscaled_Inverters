@@ -16,8 +16,8 @@
 
 
 
-uint8_t Voltage_Filter_Coeff(float coeff);
-uint8_t Current_Filter_Coeff(float coeff);
+uint8_t Voltage_Filter_Length(uint32_t length);
+uint8_t Current_Filter_Length(uint32_t length);
 
 float ADC_to_Value(uint32_t rawValue);
 float Voltage_Conversion(float rawValue);
