@@ -48,7 +48,7 @@ uint8_t calc_Instantaneous_Power(float Ua, float Ub, float Uc, float Ia, float I
 	return HAL_OK;
 }
 
-float powerFactor(float P, float Q){
+float calc_Power_Factor(float P, float Q){
 	return (P / (sqrtf(P*P) + sqrtf(Q*Q)));
 }
 

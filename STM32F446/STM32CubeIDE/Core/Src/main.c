@@ -21,19 +21,18 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "TimerConfig.h"
-#include "Inverter.h"
-#include "adc_meas.h"
-#include "measCalc.h"
-#include "transfCalc.h"
-#include "PLL.h"
-#include "GridEstimation.h"
+#include "TimerConfig.h" // Automatic timer configuration for TIM1 and TIM2.
+#include "Inverter.h" // SVM algorithm.
+#include "adc_meas.h" // ADC measurements + conversations.
+#include "measCalc.h" // Calculating various values.
+#include "PLL.h" // PLL algorithms
+#include "GridEstimation.h" // Grid estimation algorithm
 
 
 
-#include <string.h> // sprintf(...)
-#include <stdio.h> // input/output
-#include <stdbool.h> // Boolean data type
+#include <string.h> // Used for: sprintf(...)
+#include <stdio.h> // Used for: input/output
+#include <stdbool.h> // Used for: Boolean data type
 
 //#include <stdlib.h> //
 
@@ -66,7 +65,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 // Switching- , Nominal grid - and Sample frequency
-const float f_sw = 20e3;
+const float f_sw = 10e3 * 2.0f; // 10kHz for every interrupt * 2 for the whole period (10kHz switching)
 const float nominal_freq = 10.0f;
 const float sample_freq = 5e3;
 
@@ -81,8 +80,7 @@ const float RADIAL_SPEED = (nominal_freq * PI2) / f_sw;
 float Mi = 0.6;
 float PWM1, PWM2, PWM3;
 float angle = 0;
-float theta = 0;	// angle and theta is the same, but running both a PLL while grid forming, we need an angle for both (angle->SVM, theta->PLL)
-float residiual_angle = 0; // angle difference to verify PLL with calculations.
+float theta = 0;	// angle and theta is the same, but running both a PLL while grid forming, we need an angle for both (angle for SVM, theta for PLL)
 
 // Voltage variables
 float Uab, Ubc, Uca;
@@ -100,7 +98,6 @@ float Id, Iq, Iz;
 
 // Power variables
 float P, Q, S, Pf;
-float P_RMS, Q_RMS, S_RMS, Pf_RMS;
 
 // Offset voltage for ADC and DC-Link voltage
 float Offset, DCLink;
@@ -212,13 +209,13 @@ int main(void)
   /*
    *  Set filter coefficients for measurements
    */
-  Voltage_Filter_Length(0); // Set voltage measurement coefficients
-  Current_Filter_Length(0); // Set current measurement coefficients
-  Power_Filter_Length(0);	// Set power calculation coefficients (optional)
-  RMS_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set RMS filter coefficients to 5 periods of nominal_freq
+  Voltage_Filter_Length(0); // Set voltage measuring filter length
+  Current_Filter_Length(0); // Set current measuring filter length
+  Power_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set power calculation filter length to 10 periods of nominal_freq
+  RMS_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set RMS filter length to 10 periods of nominal_freq
 
   /*
-   * Initial measurement for ADC Offset and DC Link voltage
+   * Initial measurement for ADC Offset (is a must!) and DC Link voltage
    */
   for (int i = 0; i < (uint32_t)10e3; ++i) {
 	  DCLink = Voltage_DCLink();
@@ -243,27 +240,38 @@ int main(void)
 	  if (TIM2_falg) {
 		  TIM2_falg = false;
 
-		  Voltage_Offset();
-
+		  /*
+		   * Measure grid voltages
+		   */
 		  Uab = meas_Uab(Uab);
 		  Ubc = meas_Ubc(Ubc);
 		  Uca = meas_Uac(Uca);
-
+		  // Re-calculate phase-phase voltages to phase-neutral voltages
 		  calc_Uxx_to_Uxn(Uab, Ubc, Uca, &Ua, &Ub, &Uc);
+		  // Calculate the Voltage RMS values
+		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
 
+		  /*
+		   * Measure grid currents
+		   */
 		  Ia = meas_Ia(Ia);
 		  Ib = meas_Ib(Ib);
 		  Ic = meas_Ic(Ic);
+		  // Calculate the Current RMS values
+		  calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
 
+		  /*
+		   * Calculate inverter power
+		   */
 		  calc_Instantaneous_Power(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
-		  P_RMS = exponential_Filter(0.999, P, P_RMS);
-		  Q_RMS = exponential_Filter(0.999, Q, Q_RMS);
-		  Pf = powerFactor(P, Q);
-
+		  Pf = calc_Power_Factor(P, Q);
+		  // Calculate the RMS values of Voltages and Currents
 		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
 		  calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
 
-
+		  /*
+		   * Calculate angle from PLL
+		   */
 		  dqPLL(Ua, Ub, Uc, &theta, &Ud);
 
 /*
@@ -280,13 +288,11 @@ int main(void)
 		  if (TIM2_flag_acumulator >= sample_freq) {
 			  TIM2_flag_acumulator = 0;
 
-			  residiual_angle = angle - theta;
-
 			  //GeneticandRandomSearch(GridMeasNSamples, GridEstiNSamples, GridMeasValues, GridEstiValues);
 
 			  char outputBuffer[256];
 			  //uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.2f. IbRMS: %.2f. IcRMS: %.2f. P: %.2f. Q: %.2f. X: %.2f. R: %.2f. Eg: %.2f. Error: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, GridEstiValues[0].X, GridEstiValues[0].R, GridEstiValues[0].Eg, GridEstiValues[0].Error, angle, theta, residiual_angle);
-			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P_RMS, Q_RMS, Pf, angle, theta, residiual_angle);
+			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, Pf, angle, theta, (angle - theta));
 			  HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
 		  }
 		  TIM2_flag_acumulator++;

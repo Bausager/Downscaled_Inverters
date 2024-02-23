@@ -25,7 +25,8 @@ uint8_t setPIdqPLL(float nom_f, float sampleFreq){
 
 uint8_t dqPLL(float Ua, float Ub, float Uc, float* Theta, float* Ud){
 
-	simpClarkeParkTrans(Ua, Ub, Uc, *Theta, Ud, &temp1);
+
+	transf_abc_to_dq(Ua, Ub, Uc, *Theta, Ud, &temp1);
 
 	PIintegral +=  (Ts/2.0f) * (temp1 + oldError);
 	oldError = temp1;
