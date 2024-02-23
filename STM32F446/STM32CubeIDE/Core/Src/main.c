@@ -212,9 +212,9 @@ int main(void)
   /*
    *  Set filter coefficients for measurements
    */
-  Voltage_Filter_Length(10); // Set voltage measurement coefficients
-  Current_Filter_Length(10); // Set current measurement coefficients
-  Power_Filter_Length(10);	// Set power calculation coefficients (optional)
+  Voltage_Filter_Length(0); // Set voltage measurement coefficients
+  Current_Filter_Length(0); // Set current measurement coefficients
+  Power_Filter_Length(0);	// Set power calculation coefficients (optional)
   RMS_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set RMS filter coefficients to 5 periods of nominal_freq
 
   /*
@@ -247,18 +247,18 @@ int main(void)
 
 		  Uab = meas_Uab(Uab);
 		  Ubc = meas_Ubc(Ubc);
-		  Uca = -meas_Uac(Uca);
+		  Uca = meas_Uac(Uca);
 
 		  calc_Uxx_to_Uxn(Uab, Ubc, Uca, &Ua, &Ub, &Uc);
-
-
-
 
 		  Ia = meas_Ia(Ia);
 		  Ib = meas_Ib(Ib);
 		  Ic = meas_Ic(Ic);
 
 		  calc_Instantaneous_Power(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
+		  P_RMS = exponential_Filter(0.999, P, P_RMS);
+		  Q_RMS = exponential_Filter(0.999, Q, Q_RMS);
+		  Pf = powerFactor(P, Q);
 
 		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
 		  calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
@@ -266,13 +266,13 @@ int main(void)
 
 		  dqPLL(Ua, Ub, Uc, &theta, &Ud);
 
-
+/*
 		  if(TIM2_flag_acumulator < GridMeasNSamples){
 			  GridMeasValues[TIM2_flag_acumulator].Pn = sqrtf(P*P);
 			  GridMeasValues[TIM2_flag_acumulator].Qn = sqrtf(Q*Q);
 			  GridMeasValues[TIM2_flag_acumulator].Vn = (UaRMS + UbRMS + UcRMS)/3.0f;
 		  }
-
+*/
 
 		  /*
 		   * Runs every second
@@ -282,10 +282,11 @@ int main(void)
 
 			  residiual_angle = angle - theta;
 
-			  GeneticandRandomSearch(GridMeasNSamples, GridEstiNSamples, GridMeasValues, GridEstiValues);
+			  //GeneticandRandomSearch(GridMeasNSamples, GridEstiNSamples, GridMeasValues, GridEstiValues);
 
 			  char outputBuffer[256];
-			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.2f. IbRMS: %.2f. IcRMS: %.2f. P: %.2f. Q: %.2f. X: %.2f. R: %.2f. Eg: %.2f. Error: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, GridEstiValues[0].X, GridEstiValues[0].R, GridEstiValues[0].Eg, GridEstiValues[0].Error, angle, theta, residiual_angle);
+			  //uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.2f. IbRMS: %.2f. IcRMS: %.2f. P: %.2f. Q: %.2f. X: %.2f. R: %.2f. Eg: %.2f. Error: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, GridEstiValues[0].X, GridEstiValues[0].R, GridEstiValues[0].Eg, GridEstiValues[0].Error, angle, theta, residiual_angle);
+			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P_RMS, Q_RMS, Pf, angle, theta, residiual_angle);
 			  HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
 		  }
 		  TIM2_flag_acumulator++;

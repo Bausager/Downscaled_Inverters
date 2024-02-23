@@ -125,7 +125,7 @@ float meas_Uab(float oldMeas){
 }
 float meas_Uac(float oldMeas){
 	// Measure the ADC value and convert is to the phase voltage.
-	temp = Voltage_Conversion(ADC_to_Value(ADC_Uac()) - offset);
+	temp = -Voltage_Conversion(ADC_to_Value(ADC_Uac()) - offset);
 	// Filter and returns the voltage.
 	return exponential_Filter(voltageFilterCoeff, temp, oldMeas);
 }
@@ -146,19 +146,19 @@ float meas_Ubc(float oldMeas){
  */
 float meas_Ia(float oldMeas){
 	// Measure the ADC value and convert is to the phase current.
-	temp = Current_Conversion(ADC_to_Value(ADC_Ia()) - offset);
+	temp = -Current_Conversion(ADC_to_Value(ADC_Ia()) - offset);
 	// Filter and returns the voltage.
 	return exponential_Filter(currentFilterCoeff, temp, oldMeas);
 }
 float meas_Ib(float oldMeas){
 	// Measure the ADC value and convert is to the phase current.
-	temp = Current_Conversion(ADC_to_Value(ADC_Ib()) - offset);
+	temp = -Current_Conversion(ADC_to_Value(ADC_Ib()) - offset);
 	// Filter and returns the voltage.
 	return exponential_Filter(currentFilterCoeff, temp, oldMeas);
 }
 float meas_Ic(float oldMeas){
 	// Measure the ADC value and convert is to the phase current.
-	temp = Current_Conversion(ADC_to_Value(ADC_Ic()) - offset);
+	temp = -Current_Conversion(ADC_to_Value(ADC_Ic()) - offset);
 	// Filter and returns the voltage.
 	return exponential_Filter(currentFilterCoeff, temp, oldMeas);
 }
