@@ -15,6 +15,7 @@ Since this is an open-source, student use it and research need to be understood 
 Even if the person isn't an expert.
 That is importent!
 
+New fueatures waiting to be implemented  can be found on the project site [Not a Generator (NaG)](https://github.com/users/Bausager/projects/2)
 
 ## University Teaching
 
