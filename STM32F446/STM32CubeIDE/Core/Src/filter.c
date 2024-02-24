@@ -15,15 +15,18 @@
 static float temp;
 
 /*
- * Exponential Filter
- * Input:
- * float alpha: Filter coefficient ([0,1])
- * float oldMeas: The filter variable
- * float newMeas: The new measurement
- * Output:
- * float exponential_Filter(...): The filtered value
+ * Function:  exponential_Filter
+ * ------------------------------
+ *	Uses an exponential filter as a low-pass filter
  *
- * more information: https://en.wikipedia.org/wiki/Exponential_smoothing
+ *	float alpha: Filter coefficient
+ *	float newMeas: The new measurements
+ *	float oldMeas: The filtered variable used for the filtered value
+ *
+ *	returns: Filtered value
+ *
+ *	Wiki: https://en.wikipedia.org/wiki/Exponential_smoothing
+ *
  */
 float exponential_Filter(float alpha, float newMeas, float oldMeas){
 	// If filter coefficient is <=0, disable filter
@@ -37,18 +40,20 @@ float exponential_Filter(float alpha, float newMeas, float oldMeas){
 }
 
 /*
- * RMS Filter
- * Input:
- * float rmsFilterLength: Normalised Filter Length [0,1], typical > 0.99 (multiply periods for nominal grid frequency).
- * float rmsValue: The filter variable
- * float newMeas: The new measurement
- * Output:
- * float RMS_Filter(...): The RMS value
+ * Function:  RMS_Filter
+ * ----------------------
+ *	Calculates the RMS value over a specific length using an exponential filter
+ *
+ *	float rmsFilterCoeff: RMS filter coefficient
+ *	float newMeas: The new measurements
+ *	float rmsValue: Filtered RMS variable
+ *
+ *	returns: Filtered RMS value
  */
-float RMS_Filter(float rmsFilterLength, float rmsValue, float newMeas){
+float RMS_Filter(float rmsFilterCoeff, float newMeas, float rmsValue){
 	// Calculate the Root-Squre
 	temp = sqrtf(newMeas * newMeas);
 	// Use exponential_Filter with a long filter length for RMS accumulation (multiply periods).
-	return exponential_Filter(rmsFilterLength, temp, rmsValue);
+	return exponential_Filter(rmsFilterCoeff, temp, rmsValue);
 
 }

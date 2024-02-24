@@ -10,10 +10,10 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
-#include "math.h"
+#include "math.h" // For sqrf() function
 
 float exponential_Filter(float alpha, float oldMeas, float newMeas);
-float RMS_Filter(float rmsFilterLength, float rmsValue, float newValue);
+float RMS_Filter(float rmsFilterCoeff, float newMeas, float rmsValue);
 
 
 #endif /* INC_FILTER_H_ */

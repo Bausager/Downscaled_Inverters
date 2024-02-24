@@ -17,14 +17,13 @@ static float temp;
  * Coefficients for filters
  */
 static float voltageFilterCoeff, currentFilterCoeff;
-static const float defaultFilterCoeff = 0.999f; // Default filter size for static values
+static const float defaultFilterCoeff = 0.999f; // Default filter size for DC values
 
 /*
  * Initial values for offset and DC Link voltage for faster convergence
  */
 static float offset = 1.65f;
 static float DCLink = 5.0f;
-
 
 /*
  * PCB Configuration (Difference Amplifier- and Shunt- Resistors and Current OPAMP Gain)
@@ -39,11 +38,17 @@ const float Current_OPAMP_Gain = 100.0f; // Current OPAMP Gain (Current Measurem
  */
 static const float ADCConversionRate = 3.3f/4095.0f;
 static const float VoltageConversionRate = 1.0f/(R2/R1);
-static const float CurrentConversionRate = 1.0f/(RShunt*Current_OPAMP_Gain);
+static const float CurrentConversionRate = -1.0f/(RShunt*Current_OPAMP_Gain); // It's negative because of the OPAMP orientation.
 
 
 /*
- *  Sets the Filter Coefficients for measurements
+ * Function:  Voltage_Filter_Length
+ * --------------------------------
+ *	Computes an filter coefficient that's between: [0,1]
+ *
+ *  uint32_t length: the sample length of the filter coefficient
+ *
+ *  returns: HAL status
  */
 uint8_t Voltage_Filter_Length(uint32_t length){
 	if(length <= 0){
@@ -54,6 +59,16 @@ uint8_t Voltage_Filter_Length(uint32_t length){
 
 	return HAL_OK;
 }
+
+/*
+ * Function:  Current_Filter_Length
+ * --------------------------------
+ *	Computes an filter coefficient that's between: [0,1]
+ *
+ *  uint32_t length: the sample length of the filter coefficient
+ *
+ *  returns: HAL status
+ */
 uint8_t Current_Filter_Length(uint32_t length){
 	if(length <= 0){
 		currentFilterCoeff = 0;
@@ -65,28 +80,50 @@ uint8_t Current_Filter_Length(uint32_t length){
 }
 
 /*
- * Conversion from ADC to Direct Voltage.
+ * Function:  ADC_to_Value
+ * -----------------------
+ *	Converts the ADC integer to the actual voltage on the pin
+ *
+ *  uint32_t rawValue: The raw integer value the ADC
+ *
+ *  returns: Voltage on the pin used for the ADC
  */
 float ADC_to_Value(uint32_t rawValue){
 	return ((float)rawValue * ADCConversionRate);
 }
 
 /*
- * Conversion from Direct Voltage to Actual Voltage.
+ * Function:  Voltage_Conversion
+ * ------------------------------
+ *	Converts the voltage in the pin to the correct voltage difference between the phases
+ *
+ *  float rawValue: Voltage on the pin.
+ *
+ *  returns: Actual voltage between the phases.
  */
 float Voltage_Conversion(float rawValue){
 	return (rawValue * VoltageConversionRate);
 }
 
 /*
- * Conversion from Direct Voltage to Actual Current.
+ * Function:  Current_Conversion
+ * ------------------------------
+ *	Converts the voltage in the pin to the correct line current
+ *
+ *  float rawValue: Voltage on the pin.
+ *
+ *  returns: Actual current on the phase.
  */
 float Current_Conversion(float rawValue){
 	return (rawValue * CurrentConversionRate);
 }
 
 /*
- * Measures the Voltage Offset for the rest of the ADC measurements.
+ * Function:  Voltage_Offset
+ * --------------------------
+ *	Measures the voltage offset for the AC value conversions, filters it, stores it locally and also returns it if needed
+ *
+ *  returns: The voltage offset for every AC measurement
  */
 float Voltage_Offset(){
 	// Measure the ADC value and convert is to the direct voltage.
@@ -98,7 +135,11 @@ float Voltage_Offset(){
 }
 
 /*
- * Measures the DC Link voltage. Can be used in control loop.
+ * Function:  Voltage_DCLink
+ * --------------------------
+ *	Measures the DC Link voltage, filters it, stores it locally and also returns it if needed
+ *
+ *  returns: The DC Link voltage
  */
 float Voltage_DCLink(){
 	// Measure the ADC value and convert is to the DC Link voltage.
@@ -110,12 +151,13 @@ float Voltage_DCLink(){
 }
 
 /*
- * meas_Uxx
- * Measures the phase-phase voltage
- * Input:
- * float oldMeas: The old measurement which is used in the filter.
- * Output:
- * float meas_Uxx(): The filtered measurement
+ * Function:  meas_Uab
+ * -------------------
+ *	Measures, converts and filters the line-line voltage for Phase A-B
+ *
+ *  float oldMeas: Variable for the filtered voltage
+ *
+ *  returns: The filtered line-line voltage for Phase A-B
  */
 float meas_Uab(float oldMeas){
 	// Measure the ADC value and convert is to the phase voltage.
@@ -123,12 +165,16 @@ float meas_Uab(float oldMeas){
 	// Filter and returns the voltage.
 	return exponential_Filter(voltageFilterCoeff, temp, oldMeas);
 }
-float meas_Uac(float oldMeas){
-	// Measure the ADC value and convert is to the phase voltage.
-	temp = -Voltage_Conversion(ADC_to_Value(ADC_Uac()) - offset);
-	// Filter and returns the voltage.
-	return exponential_Filter(voltageFilterCoeff, temp, oldMeas);
-}
+
+/*
+ * Function:  meas_Ubc
+ * -------------------
+ *	Measures, converts and filters the line-line voltage for Phase B-C
+ *
+ *  float oldMeas: Variable for the filtered voltage
+ *
+ *  returns: The filtered line-line voltage for Phase B-C
+ */
 float meas_Ubc(float oldMeas){
 	// Measure the ADC value and convert is to the phase voltage.
 	temp = Voltage_Conversion(ADC_to_Value(ADC_Ubc()) - offset);
@@ -137,28 +183,66 @@ float meas_Ubc(float oldMeas){
 }
 
 /*
- * meas_Ix
- * Measures the phase current
- * Input:
- * float oldMeas: The old measurement which is used in the filter.
- * Output:
- * float meas_Ix(): The filtered measurement
+ * Function:  meas_Uac
+ * -------------------
+ *	Measures, converts and filters the line-line voltage for Phase C-A
+ *
+ *  float oldMeas: Variable for the filtered voltage
+ *
+ *  returns: The filtered line-line voltage for Phase C-A
+ */
+float meas_Uca(float oldMeas){
+	// Measure the ADC value and convert is to the phase voltage.
+	// The measured voltage is from A-C not C-A, but converted to C-A because if the general phase convention.
+	temp = -Voltage_Conversion(ADC_to_Value(ADC_Uac()) - offset);
+	// Filter and returns the voltage.
+	return exponential_Filter(voltageFilterCoeff, temp, oldMeas);
+}
+
+/*
+ * Function:  meas_Ia
+ * -------------------
+ *	Measures, converts and filters the line current for Phase A
+ *
+ *  float oldMeas: Variable for the filtered current
+ *
+ *  returns: The filtered line current for Phase A
  */
 float meas_Ia(float oldMeas){
 	// Measure the ADC value and convert is to the phase current.
-	temp = -Current_Conversion(ADC_to_Value(ADC_Ia()) - offset);
+	temp = Current_Conversion(ADC_to_Value(ADC_Ia()) - offset);
 	// Filter and returns the voltage.
 	return exponential_Filter(currentFilterCoeff, temp, oldMeas);
 }
+
+/*
+ * Function:  meas_Ib
+ * -------------------
+ *	Measures, converts and filters the line current for Phase B
+ *
+ *  float oldMeas: Variable for the filtered current
+ *
+ *  returns: The filtered line current for Phase B
+ */
 float meas_Ib(float oldMeas){
 	// Measure the ADC value and convert is to the phase current.
-	temp = -Current_Conversion(ADC_to_Value(ADC_Ib()) - offset);
+	temp = Current_Conversion(ADC_to_Value(ADC_Ib()) - offset);
 	// Filter and returns the voltage.
 	return exponential_Filter(currentFilterCoeff, temp, oldMeas);
 }
+
+/*
+ * Function:  meas_Ic
+ * -------------------
+ *	Measures, converts and filters the line current for Phase C
+ *
+ *  float oldMeas: Variable for the filtered current
+ *
+ *  returns: The filtered line current for Phase C
+ */
 float meas_Ic(float oldMeas){
 	// Measure the ADC value and convert is to the phase current.
-	temp = -Current_Conversion(ADC_to_Value(ADC_Ic()) - offset);
+	temp = Current_Conversion(ADC_to_Value(ADC_Ic()) - offset);
 	// Filter and returns the voltage.
 	return exponential_Filter(currentFilterCoeff, temp, oldMeas);
 }

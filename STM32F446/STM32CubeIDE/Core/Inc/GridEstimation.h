@@ -15,9 +15,9 @@
 /*
  * GridEstiMeas
  * struct for grid measurements
- * float Vn: Voltage RMS. Could do and average over a, b and c.
- * float Pn: Active Power
- * float Qn: Reactive Power
+ * float Vn: Line-Neutral voltage RMS. Could do and average over Ua, Ub and Uc.
+ * float Pn: Plant Active Power
+ * float Qn: Plant Reactive Power
  */
 struct GridEstiMeas{
 	float Vn;
@@ -32,7 +32,7 @@ struct GridEstiMeas{
  * float Eg: Grid RMS Voltage
  * float R: Grid Resistance
  * float X: Grid Reactance
- * float Error: Reactive Power
+ * float Error: Cost function error
  */
 struct GridEstiVari{
 	float Eg;

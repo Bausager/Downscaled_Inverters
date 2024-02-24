@@ -11,34 +11,51 @@
 
 
 /*
- * Variables for SVM
+ * Variables used in SVM function
  */
 static float svm_period_scaler, svm_T_sw;
 static uint32_t svm_AutoReloadRegister;
 
 
 /*
- * svm_block_init
- * Input:
- * uint32_t AutoReloadRegister: AutoReloadRegister for the timer used for the PWM e.g; TIM1->ARR.
- * float Freq: the switching frequency.
+ * Function:  svm_block_init
+ * -------------------------
+ *	Computes variables used in the SVM function
+ *
+ *	uint32_t AutoReloadRegister: AutoReloadRegister(ARR register) in the used timer for SVM algorithm
+ *	 float Freq: Switching frequency
+ *
+ *	returns: HAL status
  */
 uint8_t svm_block_init(uint32_t AutoReloadRegister, float Freq){
 	svm_T_sw = 1.0f/Freq;
 	svm_period_scaler = AutoReloadRegister/svm_T_sw;
 	svm_AutoReloadRegister = AutoReloadRegister;
+
 	return HAL_OK;
 }
 
 
 /*
- * svm_block
- * Input:
- * float modulation_idx: Modulation index.
- * float angle_rad: Grid angle in radians.
- * float* tim_1: Timer compare/interrupt register for first channel e.g; TIM1->CCR1.
- * float* tim_2: Timer compare/interrupt register for second channel e.g; TIM1->CCR2.
- * float* tim_3: Timer compare/interrupt register for third channel e.g; TIM1->CCR3.
+ * Function:  svm_block
+ * ---------------------
+ *	Computes the timer compare/interrupt register for Space-Vector-Modulation(SVM) algorithm with the modulation index and angle
+ *
+ *	float modulation_idx: The magnitude for the SVM algorithm which can be between [0,2/sqrtf(3)] or [0,1.1547]
+ *	float angle_rad: Grid angle in radians, either chosen (Grid Forming) or found with a Phase-LockLoop(PLL).
+ *
+ *	float* tim_1: Pointer to the timer compare/interrupt register for first channel.
+ *	float* tim_2: Pointer to the timer compare/interrupt register for second channel.
+ *	float* tim_3: Pointer to the timer compare/interrupt register for third channel.
+ *
+ *	returns: HAL status
+ *
+ *	@article{article,
+	author = {Neacsu, D.O.},
+	year = {2001},
+	month = {01},
+	pages = {},
+	title = {Space vector modulation - An introduction - Tutorial at IECON2001}}
  */
 uint8_t svm_block(float modulation_idx, float angle_rad, float* tim_1, float* tim_2, float* tim_3){
 
@@ -94,7 +111,8 @@ uint8_t svm_block(float modulation_idx, float angle_rad, float* tim_1, float* ti
         t_3 = t_a + t_0;
     }
     else{
-    	return HAL_ERROR;
+    	// Handles Error
+    	Error_Handler();
     }
 
 	t_1 = floorf((t_1)*(svm_period_scaler) + 0.5f); // Update compare values
@@ -104,24 +122,25 @@ uint8_t svm_block(float modulation_idx, float angle_rad, float* tim_1, float* ti
     if(t_1 > svm_AutoReloadRegister){
     	t_1 = svm_AutoReloadRegister;
     }
-    else if (t_1 < 0){
-    	t_1 = 0;
+    else if (t_1 < 0.0f){
+    	t_1 = 0.0f;
     }
     if (t_2 > svm_AutoReloadRegister){
     	t_2 = svm_AutoReloadRegister;
     }
-    else if (t_2 < 0){
-    	t_2 = 0;
+    else if (t_2 < 0.0f){
+    	t_2 = 0.0f;
     }
     if (t_3 > svm_AutoReloadRegister){
     	t_3 = svm_AutoReloadRegister;
     }
-    else if (t_3 < 0){
-    	t_3 = 0;
+    else if (t_3 < 0.0f){
+    	t_3 = 0.0f;
     }
     *tim_1 = t_1;
     *tim_2 = t_2;
     *tim_3 = t_3;
+
 	return HAL_OK;
 }
 

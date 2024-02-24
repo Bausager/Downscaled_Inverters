@@ -15,9 +15,14 @@ const uint32_t ADC_channels[16] = {ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2, 
 									ADC_CHANNEL_10, ADC_CHANNEL_11, ADC_CHANNEL_12, ADC_CHANNEL_13, ADC_CHANNEL_14, ADC_CHANNEL_15};
 
 /*
- * ADC Selector
- * ADC_number: The ADC you want to use. Eg. 1; 2; 3.
- * Channel: Which ADC channel you want to use. Eg. 0; 7; 13.
+ * Function:  ADC_Selector
+ * ------------------------
+ *	Used to select the correct ADC channel when measuring on a specific pin
+ *
+ *	uint8_t ADC_number: Which of the three ADC is needed.
+ *	uint8_t Channal: Which channel of the ADC needed.
+ *
+ *	returns: HAL status
  */
 uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	ADC_ChannelConfTypeDef sConfig = {0};
@@ -49,8 +54,13 @@ uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
 	return HAL_OK;
 }
 
+
 /*
- * Direct measures the voltages on the PCB.
+ * Function:  ADC_Uab
+ * -------------------
+ *	Selects the correct ADC and channel and measures the line-line voltage of Phase A-B
+ *
+ *	returns: Direct ADC integer value for line-line voltage of Phase A-B
  */
 uint32_t ADC_Uab(){
 
@@ -73,6 +83,14 @@ uint32_t ADC_Uab(){
 	return HAL_ADC_GetValue(&hadc1);
 
 }
+
+/*
+ * Function:  ADC_Uac
+ * -------------------
+ *	Selects the correct ADC and channel and measures the line-line voltage of Phase A-C
+ *
+ *	returns: Direct ADC integer value for line-line voltage of Phase A-C
+ */
 uint32_t ADC_Uac(){
 
 	// Selects the correct ADC
@@ -92,6 +110,14 @@ uint32_t ADC_Uac(){
 	// Read the ADC Value
 	return HAL_ADC_GetValue(&hadc2);
 }
+
+/*
+ * Function:  ADC_Ubc
+ * -------------------
+ *	Selects the correct ADC and channel and measures the line-line voltage of Phase B-C
+ *
+ *	returns: Direct ADC integer value for line-line voltage of Phase B-C
+ */
 uint32_t ADC_Ubc(){
 
 	// Selects the correct ADC
@@ -113,7 +139,11 @@ uint32_t ADC_Ubc(){
 }
 
 /*
- * Direct measures the currents on the PCB.
+ * Function:  ADC_Ia
+ * ------------------
+ *	Selects the correct ADC and channel and measures the line-neutral current of Phase A
+ *
+ *	returns: Direct ADC integer value for line-neutral current of Phase A
  */
 uint32_t ADC_Ia(){
 
@@ -134,6 +164,14 @@ uint32_t ADC_Ia(){
 	// Read the ADC Value
 	return HAL_ADC_GetValue(&hadc1);
 }
+
+/*
+ * Function:  ADC_Ib
+ * ------------------
+ *	Selects the correct ADC and channel and measures the line-neutral current of Phase B
+ *
+ *	returns: Direct ADC integer value for line-neutral current of Phase B
+ */
 uint32_t ADC_Ib(){
 
 	// Selects the correct ADC
@@ -153,6 +191,14 @@ uint32_t ADC_Ib(){
 	// Read the ADC Value
 	return  HAL_ADC_GetValue(&hadc2);
 }
+
+/*
+ * Function:  ADC_Ic
+ * ------------------
+ *	Selects the correct ADC and channel and measures the line-neutral current of Phase C
+ *
+ *	returns: Direct ADC integer value for line-neutral current of Phase C
+ */
 uint32_t ADC_Ic(){
 
 	// Selects the correct ADC
@@ -174,7 +220,11 @@ uint32_t ADC_Ic(){
 }
 
 /*
- * Direct measures the voltage offset for configure the measurements
+ * Function:  ADC_Offset
+ * ---------------------
+ *	Selects the correct ADC and channel and measures the offset which every AC value need to be compensated with.
+ *
+ *	returns: Direct ADC integer value for the offset
  */
 uint32_t ADC_Offset(){
 
@@ -197,7 +247,11 @@ uint32_t ADC_Offset(){
 }
 
 /*
- * Direct measures the voltage on the DC Link
+ * Function:  ADC_DClink
+ * ---------------------
+ *	Selects the correct ADC and channel and measures the DC Link voltage is.
+ *
+ *	returns: Direct ADC integer value for the DC Link voltage
  */
 uint32_t ADC_DClink(){
 

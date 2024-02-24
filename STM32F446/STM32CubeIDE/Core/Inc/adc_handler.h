@@ -11,6 +11,9 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 
+/*
+ * used for using ADC handlers
+ */
 extern ADC_HandleTypeDef hadc1;
 extern ADC_HandleTypeDef hadc2;
 extern ADC_HandleTypeDef hadc3;

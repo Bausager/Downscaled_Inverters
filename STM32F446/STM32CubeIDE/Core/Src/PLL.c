@@ -7,39 +7,84 @@
 /* Includes ------------------------------------------------------------------*/
 #include "PLL.h"
 
-/* Puplic variables ---------------------------------------------------------*/
-static float temp1, temp2;
+/*
+ * Helper variables for calculations
+ */
+static float temp1;
 
-static float PIintegral, oldError, Kp, Ti, Ts, nom_freq;
+/*
+ * General PLL Variables
+ */
+static float natural_frequency, TsCoeff;
+
+/*
+ * dqPLL variables
+ */
+static float dqPLLKp, dqPLLTi, dqPLLnewError, dqPLLoldError, dqPLLoldTheta;
 
 
-uint8_t setPIdqPLL(float nom_f, float sampleFreq){
-	nom_freq = nom_f;
-	temp1 = 4.6f / ((1.0f/sqrtf(2.0f)) * nom_f);
-	Kp = 9.2f / temp1;
-	Ti = ((1.0f/sqrtf(2.0f)) * (1.0f/sqrtf(2.0f)) * temp1 * temp1)/21.16f;
-	Ts = 1.0f/sampleFreq;
+/*
+ * Function:  dqPLL_Config
+ * ------------------------
+ *	Configures dqPLL internal coefficients and PI controller
+ *
+ *  float nom_f: Nominal/natural grid frequency
+ *  float sampleFreq: Sample frequency
+ *
+ *  returns: HAL status
+ *
+ */
+uint8_t dqPLL_Config(float nom_f, float sampleFreq){
+	natural_frequency = nom_f;
+	TsCoeff = (1.0f/sampleFreq) / 2.0f;
+
+	float settling_time = 4.6f/(0.70710f * nom_f);
+	dqPLLKp = 9.2f / settling_time;
+	dqPLLTi = ((0.49999 * settling_time * settling_time)/21.16f)/TsCoeff;
 	return HAL_OK;
 
 }
 
+/*
+ * Function:  dqPLL
+ * ----------------
+ *	dq-Phase-Lock-Loop(dqPLL) for grid angle estimation and magnitude.
+ *
+ *  float Ua: Line-neutral voltage for Phase A
+ *  float Ub: Line-neutral voltage for Phase B
+ *  float Uc: Line-neutral voltage for Phase C
+ *
+ *  float* Theta: Pointer to grid angle variable which is integrated upon
+ *  float* Ud: Pointer to grid magnitude variable
+ *
+ *  returns: HAL status
+ *
+ *	@article{ALI2018434,
+	title = {Three-phase phase-locked loop synchronization algorithms for grid-connected renewable energy systems: A review},
+	journal = {Renewable and Sustainable Energy Reviews},
+	volume = {90},
+	pages = {434-452},
+	year = {2018},
+	issn = {1364-0321},
+	doi = {https://doi.org/10.1016/j.rser.2018.03.086},
+	url = {https://www.sciencedirect.com/science/article/pii/S1364032118301813},
+	author = {Zunaib Ali and Nicholas Christofides and Lenos Hadjidemetriou and Elias Kyriakides and Yongheng Yang and Frede Blaabjerg}}
+ */
 uint8_t dqPLL(float Ua, float Ub, float Uc, float* Theta, float* Ud){
 
+	transf_abc_to_dq(Ua, Ub, Uc, *Theta, Ud, &dqPLLnewError);
 
-	transf_abc_to_dq(Ua, Ub, Uc, *Theta, Ud, &temp1);
+	temp1 = dqPLLKp*(dqPLLnewError + (dqPLLTi*(dqPLLnewError + dqPLLoldError)));
+	dqPLLoldError = dqPLLnewError;
 
-	PIintegral +=  (Ts/2.0f) * (temp1 + oldError);
-	oldError = temp1;
-	temp1 = Kp*(temp1 + (PIintegral/Ti));
+	temp1 += natural_frequency;
 
-	temp1 += nom_freq;
-
-	*Theta +=  (Ts/2.0f) * (temp1 + temp2);
+	*Theta +=  TsCoeff * (temp1 + dqPLLoldTheta);
 	if (*Theta > 6.2831853072f) {
 		*Theta -= 6.2831853072f;
 	}
 
-	temp2 = temp1;
+	dqPLLoldTheta = temp1;
 
 	return HAL_OK;
 

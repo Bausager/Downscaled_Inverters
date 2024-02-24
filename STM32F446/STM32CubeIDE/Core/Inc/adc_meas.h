@@ -10,10 +10,7 @@
 
 /* Includes ------------------------------------------------------------------*/
 #include "adc_handler.h"
-#include "filter.h"
-
-/* Puplic variables ---------------------------------------------------------*/
-
+#include "filter.h" // For the use of filters
 
 
 uint8_t Voltage_Filter_Length(uint32_t length);
@@ -27,9 +24,8 @@ float Voltage_Offset();
 float Voltage_DCLink();
 
 float meas_Uab(float oldMeas);
-float meas_Uac(float oldMeas);
 float meas_Ubc(float oldMeas);
-
+float meas_Uca(float oldMeas);
 
 float meas_Ia(float oldMeas);
 float meas_Ib(float oldMeas);
