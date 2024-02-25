@@ -28,7 +28,7 @@ static float DCLink = 5.0f;
 /*
  * PCB Configuration (Difference Amplifier- and Shunt- Resistors and Current OPAMP Gain)
  */
-const float R1 = 3300.0f; // R1 in the Difference Amplifier (Voltage Measurement)
+const float R1 = 3300.0f;// R1 in the Difference Amplifier (Voltage Measurement)
 const float R2 = 510.0f; // R2 in the Difference Amplifier (Voltage Measurement)
 const float RShunt = 0.1f; // Shunt Resistor (Current Measurement)
 const float Current_OPAMP_Gain = 100.0f; // Current OPAMP Gain (Current Measurement)

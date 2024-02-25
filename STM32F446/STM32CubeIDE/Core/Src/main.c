@@ -65,8 +65,8 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 // Switching- , Nominal grid - and Sample frequency
-const float f_sw = 20e3 * 2.0f; // 10kHz for every interrupt * 2 for the whole period (20kHz switching)
-const float nominal_freq = 10.0f;
+const float f_sw = 20e3 * 2.0f; // 20kHz for every interrupt * 2 for the whole period (40kHz switching)
+const float nominal_freq = 50.0f;
 const float sample_freq = 5e3;
 
 // Flags
@@ -77,10 +77,12 @@ uint32_t TIM2_flag_acumulator = 0; // Helper for TIM2_falg
 const float RADIAL_SPEED = (nominal_freq * PI2) / f_sw;
 
 // Modulation index, PWM and angle variables for SVM
-float Mi = 0.6;
+float Mi = 0.6f;
 float PWM1, PWM2, PWM3;
 float angle = 0;
-float theta = 0;	// angle and theta is the same, but running both a PLL while grid forming, we need an angle for both (angle for SVM, theta for PLL)
+// Theta and angle is for the PLL. Theta is the angle from the measurement, angle1 is the angle before the LCL filter.
+float theta = 0;
+float angle1 = 0;
 
 // Voltage variables
 float Uab, Ubc, Uca;
@@ -199,7 +201,9 @@ int main(void)
   /*
    * Initialise PLL
    */
+  LCL_Angle_Compensation(nominal_freq);
   dqPLL_Config(nominal_freq, sample_freq);
+
 
   /*
    * Initialise Grid estimation variables
@@ -227,6 +231,7 @@ int main(void)
    */
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_Base_Start_IT(&htim2);
+  theta = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -239,7 +244,7 @@ int main(void)
 	   */
 	  if (TIM2_falg) {
 		  TIM2_falg = false;
-
+		  Voltage_Offset();
 		  /*
 		   * Measure grid voltages
 		   */
@@ -250,6 +255,7 @@ int main(void)
 		  calc_Uxx_to_Uxn(Uab, Ubc, Uca, &Ua, &Ub, &Uc);
 		  // Calculate the Voltage RMS values
 		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
+		  calc_RMS(Uab, Ubc, Uca, &UabRMS, &UbcRMS, &UcaRMS);
 
 		  /*
 		   * Measure grid currents
@@ -265,14 +271,14 @@ int main(void)
 		   */
 		  calc_Instantaneous_Power(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
 		  Pf = calc_Power_Factor(P, Q);
-		  // Calculate the RMS values of Voltages and Currents
-		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
+		  // Calculate the Current RMS values
 		  calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
 
 		  /*
 		   * Calculate angle from PLL
 		   */
 		  dqPLL(Ua, Ub, Uc, &theta, &Ud);
+
 
 /*
 		  if(TIM2_flag_acumulator < GridMeasNSamples){
@@ -292,9 +298,11 @@ int main(void)
 			  //GeneticandRandomSearch(GridMeasNSamples, GridEstiNSamples, GridMeasValues, GridEstiValues);
 
 			  char outputBuffer[256];
+			  angle1 = dqPLL(Ua, Ub, Uc, &theta, &Ud);
 			  //uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.2f. IbRMS: %.2f. IcRMS: %.2f. P: %.2f. Q: %.2f. X: %.2f. R: %.2f. Eg: %.2f. Error: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, GridEstiValues[0].X, GridEstiValues[0].R, GridEstiValues[0].Eg, GridEstiValues[0].Error, angle, theta, residiual_angle);
-			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f. Ud: %0.2f. Uq: %0.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, Pf, angle, theta, (angle - theta), Ud, Uq);
+			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f. Ud: %0.2f. Uq: %0.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, Pf, angle, angle1, (angle - angle1), Ud, Uq);
 			  HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
+
 		  }
 		  TIM2_flag_acumulator++;
 
