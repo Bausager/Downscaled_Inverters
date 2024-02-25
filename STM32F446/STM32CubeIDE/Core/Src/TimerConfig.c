@@ -16,12 +16,12 @@
  *	Configures Timer prescaler and auto-reload register for given timer and frequency
  *	Only work with TIM1 and TIM2
  *
- *  uint8_t htim: Which timer is going to be configured
- *  float Hz: Frequency of interrupts for the timer
+ *  const uint8_t htim: Which timer is going to be configured
+ *  const float Hz: Frequency of interrupts for the timer
  *
  *  returns: HAL status
  */
-uint8_t TIM_freq(uint8_t htim, float Hz){
+uint8_t TIM_freq(const uint8_t htim, const float Hz){
 // Link: See page 118 for Clock tree
 // https://www.st.com/resource/en/reference_manual/rm0390-stm32f446xx-advanced-armbased-32bit-mcus-stmicroelectronics.pdf
 

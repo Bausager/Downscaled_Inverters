@@ -13,7 +13,7 @@
 #include "main.h"
 
 
-uint8_t TIM_freq(uint8_t htim, float Hz);
+uint8_t TIM_freq(const uint8_t htim, const float Hz);
 
 
 

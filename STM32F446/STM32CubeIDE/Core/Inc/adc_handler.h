@@ -19,7 +19,7 @@ extern ADC_HandleTypeDef hadc2;
 extern ADC_HandleTypeDef hadc3;
 
 
-uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal);
+uint8_t ADC_Selector(const uint8_t ADC_number, const uint8_t Channal);
 
 uint32_t ADC_Uab();
 uint32_t ADC_Uac();

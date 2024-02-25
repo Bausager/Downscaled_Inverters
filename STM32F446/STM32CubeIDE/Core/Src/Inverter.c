@@ -22,12 +22,12 @@ static uint32_t svm_AutoReloadRegister;
  * -------------------------
  *	Computes variables used in the SVM function
  *
- *	uint32_t AutoReloadRegister: AutoReloadRegister(ARR register) in the used timer for SVM algorithm
- *	 float Freq: Switching frequency
+ *	const uint32_t AutoReloadRegister: AutoReloadRegister(ARR register) in the used timer for SVM algorithm
+ *	const float Freq: Switching frequency
  *
  *	returns: HAL status
  */
-uint8_t svm_block_init(uint32_t AutoReloadRegister, float Freq){
+uint8_t svm_block_init(const uint32_t AutoReloadRegister, const float Freq){
 	svm_T_sw = 1.0f/Freq;
 	svm_period_scaler = AutoReloadRegister/svm_T_sw;
 	svm_AutoReloadRegister = AutoReloadRegister;
@@ -41,8 +41,8 @@ uint8_t svm_block_init(uint32_t AutoReloadRegister, float Freq){
  * ---------------------
  *	Computes the timer compare/interrupt register for Space-Vector-Modulation(SVM) algorithm with the modulation index and angle
  *
- *	float modulation_idx: The magnitude for the SVM algorithm which can be between [0,2/sqrtf(3)] or [0,1.1547]
- *	float angle_rad: Grid angle in radians, either chosen (Grid Forming) or found with a Phase-LockLoop(PLL).
+ *	const float modulation_idx: The magnitude for the SVM algorithm which can be between [0,2/sqrtf(3)] or [0,1.1547]
+ *	const float angle_rad: Grid angle in radians, either chosen (Grid Forming) or found with a Phase-LockLoop(PLL).
  *
  *	float* tim_1: Pointer to the timer compare/interrupt register for first channel.
  *	float* tim_2: Pointer to the timer compare/interrupt register for second channel.
@@ -57,7 +57,7 @@ uint8_t svm_block_init(uint32_t AutoReloadRegister, float Freq){
 	pages = {},
 	title = {Space vector modulation - An introduction - Tutorial at IECON2001}}
  */
-uint8_t svm_block(float modulation_idx, float angle_rad, float* tim_1, float* tim_2, float* tim_3){
+uint8_t svm_block(const float modulation_idx, const float angle_rad, float* tim_1, float* tim_2, float* tim_3){
 
 	float svm_angle = angle_rad - (floorf(angle_rad/FULL_CIRCLE)*FULL_CIRCLE);
 	float svm_angle_in_sector = svm_angle - floorf(svm_angle/SECTOR)*SECTOR;

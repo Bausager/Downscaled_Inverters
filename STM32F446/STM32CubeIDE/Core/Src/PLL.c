@@ -28,13 +28,13 @@ static float dqPLLKp, dqPLLTi, dqPLLnewError, dqPLLoldError, dqPLLoldTheta;
  * ------------------------
  *	Configures dqPLL internal coefficients and PI controller
  *
- *  float nom_f: Nominal/natural grid frequency
- *  float sampleFreq: Sample frequency
+ *  const float nom_f: Nominal/natural grid frequency
+ *  const float sampleFreq: Sample frequency
  *
  *  returns: HAL status
  *
  */
-uint8_t dqPLL_Config(float nom_f, float sampleFreq){
+uint8_t dqPLL_Config(const float nom_f, const float sampleFreq){
 	natural_frequency = nom_f;
 	TsCoeff = (1.0f/sampleFreq) / 2.0f;
 
@@ -50,9 +50,9 @@ uint8_t dqPLL_Config(float nom_f, float sampleFreq){
  * ----------------
  *	dq-Phase-Lock-Loop(dqPLL) for grid angle estimation and magnitude.
  *
- *  float Ua: Line-neutral voltage for Phase A
- *  float Ub: Line-neutral voltage for Phase B
- *  float Uc: Line-neutral voltage for Phase C
+ *  const float Ua: Line-neutral voltage for Phase A
+ *  const float Ub: Line-neutral voltage for Phase B
+ *  const float Uc: Line-neutral voltage for Phase C
  *
  *  float* Theta: Pointer to grid angle variable which is integrated upon
  *  float* Ud: Pointer to grid magnitude variable
@@ -70,7 +70,7 @@ uint8_t dqPLL_Config(float nom_f, float sampleFreq){
 	url = {https://www.sciencedirect.com/science/article/pii/S1364032118301813},
 	author = {Zunaib Ali and Nicholas Christofides and Lenos Hadjidemetriou and Elias Kyriakides and Yongheng Yang and Frede Blaabjerg}}
  */
-uint8_t dqPLL(float Ua, float Ub, float Uc, float* Theta, float* Ud){
+uint8_t dqPLL(const float Ua, const float Ub, const float Uc, float* Theta, float* Ud){
 
 	transf_abc_to_dq(Ua, Ub, Uc, *Theta, Ud, &dqPLLnewError);
 

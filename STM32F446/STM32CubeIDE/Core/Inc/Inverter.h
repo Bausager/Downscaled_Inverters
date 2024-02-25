@@ -31,8 +31,8 @@
 
 
 /* Puplic function prototypes -----------------------------------------------*/
-uint8_t svm_block_init(uint32_t AutoReloadRegister, float T_sw);
-uint8_t svm_block(float modulation_idx, float angle_rad, float* tim_1, float* tim_2, float* tim_3);
+uint8_t svm_block_init(const uint32_t AutoReloadRegister, const float T_sw);
+uint8_t svm_block(const float modulation_idx, const float angle_rad, float* tim_1, float* tim_2, float* tim_3);
 
 
 

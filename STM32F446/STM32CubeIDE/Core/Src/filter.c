@@ -19,16 +19,16 @@ static float temp;
  * ------------------------------
  *	Uses an exponential filter as a low-pass filter
  *
- *	float alpha: Filter coefficient
- *	float newMeas: The new measurements
- *	float oldMeas: The filtered variable used for the filtered value
+ *	const float alpha: Filter coefficient
+ *	const float newMeas: The new measurements
+ *	const float oldMeas: The filtered variable used for the filtered value
  *
  *	returns: Filtered value
  *
  *	Wiki: https://en.wikipedia.org/wiki/Exponential_smoothing
  *
  */
-float exponential_Filter(float alpha, float newMeas, float oldMeas){
+float exponential_Filter(const float alpha, const float newMeas, const float oldMeas){
 	// If filter coefficient is <=0, disable filter
 	if (alpha <= 0) {
 		return newMeas;
@@ -44,13 +44,13 @@ float exponential_Filter(float alpha, float newMeas, float oldMeas){
  * ----------------------
  *	Calculates the RMS value over a specific length using an exponential filter
  *
- *	float rmsFilterCoeff: RMS filter coefficient
- *	float newMeas: The new measurements
- *	float rmsValue: Filtered RMS variable
+ *	const float rmsFilterCoeff: RMS filter coefficient
+ *	const float newMeas: The new measurements
+ *	const float rmsValue: Filtered RMS variable
  *
  *	returns: Filtered RMS value
  */
-float RMS_Filter(float rmsFilterCoeff, float newMeas, float rmsValue){
+float RMS_Filter(const float rmsFilterCoeff, const float newMeas, const float rmsValue){
 	// Calculate the Root-Squre
 	temp = sqrtf(newMeas * newMeas);
 	// Use exponential_Filter with a long filter length for RMS accumulation (multiply periods).

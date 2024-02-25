@@ -23,12 +23,13 @@ static uint16_t quarterLength;
  * ------------------------------
  *	Calculates the quarter length of the grid estimation list and initialise the variables to random variables; Eg from 0V to 10V, R from 0ohm to 100ohm, X from 0ohm to 1omh, Error a random integer
  *
- *  uint16_t N: The length of the grid estimation list
+ *  const uint16_t N: The length of the grid estimation list
+ *
  *  struct GridEstiVari* values: list of structs of grid estimation variables
  *
  *  returns: HAL status
  */
-uint8_t InitiliseGridStruct(uint16_t N, struct GridEstiVari* values){
+uint8_t InitiliseGridStruct(const uint16_t N, struct GridEstiVari* values){
 	// Calculate 0.25 of the length of N
 	quarterLength = ceil(0.25f*(float)N);
 	// Random initialising variables in GridEstiVari.
@@ -49,12 +50,13 @@ uint8_t InitiliseGridStruct(uint16_t N, struct GridEstiVari* values){
  * ------------------
  *	Sorts through the list of grid estimation variables with the lowest error at the top
  *
- *  uint16_t N: The length of the grid estimation list
+ *  const uint16_t N: The length of the grid estimation list
+ *
  *  struct GridEstiVari* values: list of structs of grid estimation variables
  *
  *  returns: HAL status
  */
-uint8_t argsort(uint16_t N, struct GridEstiVari* values){
+uint8_t argsort(const uint16_t N, struct GridEstiVari* values){
 
 	// Sorts the array. Lowest error first
 	for (uint16_t ii = 0; ii < N; ++ii) {
@@ -78,9 +80,10 @@ uint8_t argsort(uint16_t N, struct GridEstiVari* values){
  *	Under the assumption the grid can be modelled as a pi-circuit, which is most cases is a medium-length lines, from 20km to 250km
  *	You need a minimum of three measurements for the cost function to work
  *
- *  uint16_t N: The length of the grid estimation list
- *   struct GridEstiMeas* measVal: List of the grid measurements
- *   struct GridEstiVari* EstiVal: List of the grid estimation values
+ *  const uint16_t N: The length of the grid estimation list
+ *  const struct GridEstiMeas* measVal: List of the grid measurements
+ *
+ *  struct GridEstiVari* EstiVal: List of the grid estimation values
  *
  *  returns: HAL status
  *
@@ -88,7 +91,7 @@ uint8_t argsort(uint16_t N, struct GridEstiVari* values){
  *	@Conference paper: Online Method for the Estimation of the Short Circuit Ratio with Small Grid Perturbation
  *	@Conference paper authors: D. Obradovic, A. Szabo (Siemens, Germany), P. Egedal, K. B. Danielsen, B. Andresen, M. Stoettrup (Siemens Wind Power, Denmark) (WIW13‐1059)
  */
-uint8_t costFunctionJ(uint16_t N, struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal){
+uint8_t costFunctionJ(uint16_t N, const struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal){
 	// Sets the error to 0, so it's not accumulate over multiply function calls
 	EstiVal->Error = 0;
 	// Calculating the error for the specific GridEstiVari
@@ -112,14 +115,15 @@ uint8_t costFunctionJ(uint16_t N, struct GridEstiMeas* measVal, struct GridEstiV
  *	Genetic aspect -> The 25% next best undergoes small perturbation
  *	Random search aspect -> the 75% worst gets randomised
  *
- *  uint16_t N: The length of the grid measurement list
- *  uint16_t M: The length of the grid estimation list
- *	struct GridEstiMeas* measVal: List if grid measurements values
+ *  const uint16_t N: The length of the grid measurement list
+ *  const uint16_t M: The length of the grid estimation list
+ *	const struct GridEstiMeas* measVal: List if grid measurements values
+ *
  *  struct GridEstiVari* EstiVal: List if grid estimation values
  *
  *  returns: HAL status
  */
-uint8_t GeneticandRandomSearch(uint16_t N, uint16_t M, struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal){
+uint8_t GeneticandRandomSearch(const uint16_t N, const uint16_t M, const struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal){
 
 
 	 // The lowest error (EstiVal[0]) is not touched.

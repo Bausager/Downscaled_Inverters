@@ -42,10 +42,10 @@ struct GridEstiVari{
 };
 
 
-uint8_t InitiliseGridStruct(uint16_t N, struct GridEstiVari* values);
-uint8_t argsort(uint16_t N, struct GridEstiVari* values);
-uint8_t costFunctionJ(uint16_t M, struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal);
-uint8_t GeneticandRandomSearch(uint16_t N, uint16_t M, struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal);
+uint8_t InitiliseGridStruct(const uint16_t N, struct GridEstiVari* values);
+uint8_t argsort(const uint16_t N, struct GridEstiVari* values);
+uint8_t costFunctionJ(const uint16_t M, const struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal);
+uint8_t GeneticandRandomSearch(const uint16_t N, const uint16_t M, const struct GridEstiMeas* measVal, struct GridEstiVari* EstiVal);
 
 
 

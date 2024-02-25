@@ -19,11 +19,11 @@ static float powerFilterCoeff, rmsFilterCoeff;
  * -----------------------------
  *	computes an filter coefficient that's between: [0,1]
  *
- *  uint32_t length: the sample length of the filter coefficient
+ *  const uint32_t length: the sample length of the filter coefficient
  *
  *  returns: HAL status
  */
-uint8_t RMS_Filter_Length(uint32_t length){
+uint8_t RMS_Filter_Length(const uint32_t length){
 	if(length <= 0){
 		rmsFilterCoeff = 0;
 	}else{
@@ -38,11 +38,11 @@ uint8_t RMS_Filter_Length(uint32_t length){
  * ------------------------------
  *	computes an filter coefficient that's between: [0,1]
  *
- *	uint32_t length: the sample length of the filter coefficient
+ *	const uint32_t length: the sample length of the filter coefficient
  *
  *	returns: HAL status
  */
-uint8_t Power_Filter_Length(uint32_t length){
+uint8_t Power_Filter_Length(const uint32_t length){
 	if(length <= 0){
 		powerFilterCoeff = 0;
 	}else{
@@ -57,9 +57,9 @@ uint8_t Power_Filter_Length(uint32_t length){
  * --------------------
  *	computes an approximation of the RMS for three values using the same RMS filter coefficient:
  *
- *	float Ua: First value.
- *	float Ub: Second value.
- *	float Uc: Third value.
+ *	const float Ua: First value.
+ *	const float Ub: Second value.
+ *	const float Uc: Third value.
  *
  *	float* UaRMS: First filtered variable pointer
  *	float* UbRMS: Second filtered variable pointer
@@ -67,7 +67,7 @@ uint8_t Power_Filter_Length(uint32_t length){
  *
  *	returns: HAL status
  */
-uint8_t calc_RMS(float Ua, float Ub, float Uc, float* UaRMS, float* UbRMS, float* UcRMS){
+uint8_t calc_RMS(const float Ua, const float Ub, const float Uc, float* UaRMS, float* UbRMS, float* UcRMS){
 	*UaRMS = RMS_Filter(rmsFilterCoeff, Ua, *UaRMS);
 	*UbRMS = RMS_Filter(rmsFilterCoeff, Ub, *UbRMS);
 	*UcRMS = RMS_Filter(rmsFilterCoeff, Uc, *UcRMS);
@@ -80,12 +80,12 @@ uint8_t calc_RMS(float Ua, float Ub, float Uc, float* UaRMS, float* UbRMS, float
  * -----------------------------------
  *	computes the instantaneous active and reactive power and filters the the results using the power filter coefficient:
  *
- *	float Ua: Line voltage for Phase A
- *	float Ub: Line voltage for Phase B
- *	float Uc: Line voltage for Phase C
- *	float Ia: Line Current for Phase A
- *	float Ib: Line Current for Phase B
- *	float Ic: Line Current for Phase C
+ *	const float Ua: Line voltage for Phase A
+ *	const float Ub: Line voltage for Phase B
+ *	const float Uc: Line voltage for Phase C
+ *	const float Ia: Line current for Phase A
+ *	const float Ib: Line current for Phase B
+ *	const float Ic: Line current for Phase C
  *
  *	float* P: Filtered active power variable pointer
  *	float* Q: Filtered reactive power variable pointer
@@ -96,7 +96,7 @@ uint8_t calc_RMS(float Ua, float Ub, float Uc, float* UaRMS, float* UbRMS, float
  *	@Patten Name:  Variable speed wind turbine having a passive grid side rectifier with scalar power control and dependent pitch control
  *	@Patten Number: US7015595B2
  */
-uint8_t calc_Instantaneous_Power(float Ua, float Ub, float Uc, float Ia, float Ib, float Ic, float* P, float* Q){
+uint8_t calc_Instantaneous_Power(const float Ua, const float Ub, const float Uc, const float Ia, const float Ib, const float Ic, float* P, float* Q){
 	*P = exponential_Filter(powerFilterCoeff, (Ua*Ia) + (Ub*Ib) + (Uc*Ic), *P);
 	*Q = exponential_Filter(powerFilterCoeff, (0.57735f*((Ia*(Uc - Ub)) + (Ib*(Ua - Uc)) + (Ic*(Ub - Ua)))), *Q);
 
@@ -108,12 +108,12 @@ uint8_t calc_Instantaneous_Power(float Ua, float Ub, float Uc, float Ia, float I
  * -----------------------------
  *	computes the power factor for the system
  *
- *	float P: Active power
- *	float Q: Reactive power
+ *	const float P: Active power
+ *	const float Q: Reactive power
  *
  *	returns: Power factor
  */
-float calc_Power_Factor(float P, float Q){
+float calc_Power_Factor(const float P, const float Q){
 	return (P / (sqrtf(P*P) + sqrtf(Q*Q)));
 }
 
@@ -122,9 +122,9 @@ float calc_Power_Factor(float P, float Q){
  * ---------------------------
  *	computes the instantaneous line-neutral voltages from line-line voltages
  *
- *	float Uab: Line-line voltage for Phase A-B
- *	float Ubc: Line-line voltage for Phase B-C
- *	float Uca: Line-line voltage for Phase C-A
+ *	const float Uab: Line-line voltage for Phase A-B
+ *	const float Ubc: Line-line voltage for Phase B-C
+ *	const float Uca: Line-line voltage for Phase C-A
  *
  *	float Ua: Line-neutral voltage for Phase A variable pointer
  *	float Ub: Line-neutral voltage for Phase B variable pointer
@@ -132,7 +132,7 @@ float calc_Power_Factor(float P, float Q){
  *
  *	returns: HAL status
  */
-uint8_t calc_Uxx_to_Uxn(float Uab, float Ubc, float Uca, float* Ua, float* Ub, float* Uc){
+uint8_t calc_Uxx_to_Uxn(const float Uab, const float Ubc, const float Uca, float* Ua, float* Ub, float* Uc){
 	*Ua = (Uab - Uca)/3.0f;
 	*Ub = (Ubc - Uab)/3.0f;
 	//*Uc = (Uca - Ubc)/3.0f;

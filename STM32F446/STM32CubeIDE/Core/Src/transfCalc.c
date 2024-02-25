@@ -17,9 +17,9 @@ static float cosTemp, sinTemp, temp1, temp2, temp3;
  * ----------------------------------------
  *	Transformation for abc to alpha-beta-gamma (Clarke Transformation)
  *
- *  float Ua: Line-neutral voltage for Phase A
- *  float Ub: Line-neutral voltage for Phase B
- *  float Uc: Line-neutral voltage for Phase C
+ *  const float Ua: Line-neutral voltage for Phase A
+ *  const float Ub: Line-neutral voltage for Phase B
+ *  const float Uc: Line-neutral voltage for Phase C
  *
  *  float* Ualpha: Pointer to alpha variable
  *  float* Ubeta: Pointer to beta variable
@@ -27,8 +27,7 @@ static float cosTemp, sinTemp, temp1, temp2, temp3;
  *
  *  returns: HAL status
  */
-uint8_
-uint8_t transf_abc_to_alphabetagamma(float Ua, float Ub, float Uc, float* Ualpha, float* Ubeta, float* Ugamma){
+uint8_t transf_abc_to_alphabetagamma(const float Ua, const float Ub, const float Uc, float* Ualpha, float* Ubeta, float* Ugamma){
 	*Ualpha = (0.66666f*Ua) + (-0.33333f*Ub) + (-0.33333f*Uc);
 	*Ubeta = (0.57735f*Ub) + (-0.57735f*Uc);
 	*Ugamma = (0.33333f*Ua) + (0.33333f*Ub) + (0.33333f*Uc);
@@ -41,9 +40,9 @@ uint8_t transf_abc_to_alphabetagamma(float Ua, float Ub, float Uc, float* Ualpha
  * ----------------------------------------
  *	Transformation for alpha-beta-gamma to abc (Inverse Clarke Transformation)
  *
- *  float Ualpha: Alpha value
- *  float Ubeta: Beta value
- *  float Ugamma: Gamma value
+ *  const float Ualpha: Alpha value
+ *  const float Ubeta: Beta value
+ *  const float Ugamma: Gamma value
  *
  *  float* Ua: Pointer to line-neutral voltage for Phase A
  *  float* Ub: Pointer to line-neutral voltage for Phase B
@@ -51,7 +50,7 @@ uint8_t transf_abc_to_alphabetagamma(float Ua, float Ub, float Uc, float* Ualpha
  *
  *  returns: HAL status
  */
-uint8_t transf_alphabetagamma_to_abc(float Ualpha, float Ubeta, float Ugamma,float* Ua, float* Ub, float* Uc){
+uint8_t transf_alphabetagamma_to_abc(const float Ualpha, const float Ubeta, const float Ugamma,float* Ua, float* Ub, float* Uc){
 	*Ua = Ualpha + Ugamma;
 	*Ub = (-0.5f*Ualpha) + (0.86602f*Ubeta) + (Ugamma);
 	*Uc = (-0.5f*Ualpha) + (-0.86602f*Ubeta) + (Ugamma);
@@ -64,16 +63,16 @@ uint8_t transf_alphabetagamma_to_abc(float Ualpha, float Ubeta, float Ugamma,flo
  * -----------------------------------
  *	Transformation for abc to alpha-beta (Simplified Clarke Transformation)
  *
- *  float Ua: Line-neutral voltage for Phase A
- *  float Ub: Line-neutral voltage for Phase B
- *  float Uc: Line-neutral voltage for Phase C
+ *  const float Ua: Line-neutral voltage for Phase A
+ *  const float Ub: Line-neutral voltage for Phase B
+ *  const float Uc: Line-neutral voltage for Phase C
  *
  *  float* Ualpha: Pointer to alpha variable
  *  float* Ubeta: Pointer to beta variable
  *
  *  returns: HAL status
  */
-uint8_t transf_abc_to_alphabeta(float Ua, float Ub, float Uc, float* Ualpha, float* Ubeta){
+uint8_t transf_abc_to_alphabeta(const float Ua, const float Ub, const float Uc, float* Ualpha, float* Ubeta){
 	*Ualpha = (0.66666f*Ua) + (-0.33333f*Ub) + (-0.33333f*Uc);
 	*Ubeta = (0.57735f*Ub) + (-0.57735f*Uc);
 
@@ -85,8 +84,8 @@ uint8_t transf_abc_to_alphabeta(float Ua, float Ub, float Uc, float* Ualpha, flo
  * ----------------------------------------
  *	Transformation for alpha-beta to abc (Simplified Inverse Clarke Transformation)
  *
- *  float Ualpha: Alpha value
- *  float Ubeta: Beta value
+ *  const float Ualpha: Alpha value
+ *  const float Ubeta: Beta value
  *
  *  float* Ua: Pointer to line-neutral voltage for Phase A
  *  float* Ub: Pointer to line-neutral voltage for Phase B
@@ -94,7 +93,7 @@ uint8_t transf_abc_to_alphabeta(float Ua, float Ub, float Uc, float* Ualpha, flo
  *
  *  returns: HAL status
  */
-uint8_t transf_alphabeta_to_abc(float Ualpha, float Ubeta,float* Ua, float* Ub, float* Uc){
+uint8_t transf_alphabeta_to_abc(const float Ualpha, const float Ubeta, float* Ua, float* Ub, float* Uc){
 	*Ua = Ualpha;
 	*Ub = (-0.5f*Ualpha) + (0.86602f*Ubeta);
 	*Uc = (-0.5f*Ualpha) + (-0.86602f*Ubeta);
@@ -108,10 +107,10 @@ uint8_t transf_alphabeta_to_abc(float Ualpha, float Ubeta,float* Ua, float* Ub, 
  * ----------------------------------------
  *	Transformation for alpha-beta-gamma to dqz (Park Transformation)
  *
- *  float Ualpha: Alpha value
- *  float Ubeta: Beta value
- *  float Ugamma: Gamma value
- *  float Theta: Grid angle
+ *  const float Ualpha: Alpha value
+ *  const float Ubeta: Beta value
+ *  const float Ugamma: Gamma value
+ *  const float Theta: Grid angle
  *
  *  float* Ud: Pointer to Ud variable
  *  float* Uq: Pointer to Uq variable
@@ -119,7 +118,7 @@ uint8_t transf_alphabeta_to_abc(float Ualpha, float Ubeta,float* Ua, float* Ub, 
  *
  *  returns: HAL status
  */
-uint8_t transf_alphabetagamma_to_dqz(float Ualpha, float Ubeta, float Ugamma, float Theta, float* Ud, float* Uq, float* Uz){
+uint8_t transf_alphabetagamma_to_dqz(const float Ualpha, const float Ubeta, const float Ugamma, const float Theta, float* Ud, float* Uq, float* Uz){
 
 	cosTemp = cosf(Theta);
 	sinTemp = sinf(Theta);
@@ -136,10 +135,10 @@ uint8_t transf_alphabetagamma_to_dqz(float Ualpha, float Ubeta, float Ugamma, fl
  * ----------------------------------------
  *	Transformation for dqz to alpha-beta-gamma (Inverse Park Transformation)
  *
- *  float Ud: Ud value
- *  float Uq: Uq value
- *  float Uz: Uz value
- *  float Theta: Grid angle
+ *  const float Ud: Ud value
+ *  const float Uq: Uq value
+ *  const float Uz: Uz value
+ *  const float Theta: Grid angle
  *
  *  float* Ualpha: Pointer to alpha variable
  *  float* Ubeta: Pointer to beta variable
@@ -147,7 +146,7 @@ uint8_t transf_alphabetagamma_to_dqz(float Ualpha, float Ubeta, float Ugamma, fl
  *
  *  returns: HAL status
  */
-uint8_t transf_dqz_to_alphabetagamma(float Ud, float Uq, float Uz, float Theta, float* Ualpha, float* Ubeta, float* Ugamma){
+uint8_t transf_dqz_to_alphabetagamma(const float Ud, const float Uq, const float Uz, const float Theta, float* Ualpha, float* Ubeta, float* Ugamma){
 
 	cosTemp = cosf(Theta);
 	sinTemp = sinf(Theta);
@@ -164,16 +163,16 @@ uint8_t transf_dqz_to_alphabetagamma(float Ud, float Uq, float Uz, float Theta, 
  * ----------------------------------
  *	Transformation for alpha-beta to dq (Simplified Park Transformation)
  *
- *  float Ualpha: Alpha value
- *  float Ubeta: Beta value
- *  float Theta: Grid angle
+ *  const float Ualpha: Alpha value
+ *  const float Ubeta: Beta value
+ *  const float Theta: Grid angle
  *
  *  float* Ud: Pointer to Ud variable
  *  float* Uq: Pointer to Uq variable
  *
  *  returns: HAL status
  */
-uint8_t transf_alphabeta_to_dq(float Ualpha, float Ubeta, float Theta, float* Ud, float* Uq){
+uint8_t transf_alphabeta_to_dq(const float Ualpha, const float Ubeta, const float Theta, float* Ud, float* Uq){
 
 	cosTemp = cosf(Theta);
 	sinTemp = sinf(Theta);
@@ -189,16 +188,16 @@ uint8_t transf_alphabeta_to_dq(float Ualpha, float Ubeta, float Theta, float* Ud
  * ----------------------------------------
  *	Transformation for dq to alpha-beta (Simplified Inverse Park Transformation)
  *
- *  float Ud: Pointer to Ud value
- *  float Uq: Pointer to Uq value
- *  float Theta: Grid angle
+ *  const float Ud: Pointer to Ud value
+ *  const float Uq: Pointer to Uq value
+ *  const float Theta: Grid angle
  *
  *  float* Ualpha: Pointer to alpha variable
  *  float* Ubeta: Pointer to beta variable
  *
  *  returns: HAL status
  */
-uint8_t transf_dq_to_alphabeta(float Ud, float Uq, float Theta, float* Ualpha, float* Ubeta){
+uint8_t transf_dq_to_alphabeta(const float Ud, const float Uq, const float Theta, float* Ualpha, float* Ubeta){
 
 	cosTemp = cosf(Theta);
 	sinTemp = sinf(Theta);
@@ -215,10 +214,10 @@ uint8_t transf_dq_to_alphabeta(float Ud, float Uq, float Theta, float* Ualpha, f
  * ----------------------------
  *	Transformation for abc to dqz (Clarke-Park Transformation)
  *
- *  float Ua: Line-neutral voltage for Phase A
- *  float Ub: Line-neutral voltage for Phase B
- *  float Uc: Line-neutral voltage for Phase C
- *  float Theta: Grid angle
+ *  const float Ua: Line-neutral voltage for Phase A
+ *  const float Ub: Line-neutral voltage for Phase B
+ *  const float Uc: Line-neutral voltage for Phase C
+ *  const float Theta: Grid angle
  *
  *  float* Ud: Pointer to Ud variable
  *  float* Uq: Pointer to Uq variable
@@ -226,7 +225,7 @@ uint8_t transf_dq_to_alphabeta(float Ud, float Uq, float Theta, float* Ualpha, f
  *
  *  returns: HAL status
  */
-uint8_t transf_abc_to_dqz(float Ua, float Ub, float Uc, float Theta, float* Ud, float* Uq, float* Uz){
+uint8_t transf_abc_to_dqz(const float Ua, const float Ub, const float Uc, const float Theta, float* Ud, float* Uq, float* Uz){
 	transf_abc_to_alphabetagamma(Ua, Ub, Uc, &temp1, &temp2, &temp3);
 	transf_alphabetagamma_to_dqz(temp1, temp2, temp3, Theta, Ud, Uq, Uz);
 
@@ -238,10 +237,10 @@ uint8_t transf_abc_to_dqz(float Ua, float Ub, float Uc, float Theta, float* Ud, 
  * -----------------------------
  *	Transformation for dqz to abc (Inverse Clarke-Park Transformation)
  *
- *  float Ud: Ud value
- *  float Uq: Uq value
- *  float Uz: Uz value
- *  float Theta: Grid angle
+ *  const float Ud: Ud value
+ *  const float Uq: Uq value
+ *  const float Uz: Uz value
+ *  const float Theta: Grid angle
  *
  *  float* Ua: Pointer to line-neutral voltage for Phase A
  *  float* Ub: Pointer to line-neutral voltage for Phase B
@@ -249,7 +248,7 @@ uint8_t transf_abc_to_dqz(float Ua, float Ub, float Uc, float Theta, float* Ud, 
  *
  *  returns: HAL status
  */
-uint8_t transf_dqz_to_abc(float Ud, float Uq, float Uz, float Theta, float* Ua, float* Ub, float* Uc){
+uint8_t transf_dqz_to_abc(const float Ud, const float Uq, const float Uz, const float Theta, float* Ua, float* Ub, float* Uc){
 	transf_dqz_to_alphabetagamma(Ud, Uq, Uz, Theta, &temp1, &temp2, &temp3);
 	transf_alphabetagamma_to_abc(temp1, temp2, temp3, Ua, Ub, Uc);
 
@@ -261,17 +260,17 @@ uint8_t transf_dqz_to_abc(float Ud, float Uq, float Uz, float Theta, float* Ua, 
  * ----------------------------
  *	Transformation for abc to dq (Simplified Clarke-Park Transformation)
  *
- *  float Ua: Line-neutral voltage for Phase A
- *  float Ub: Line-neutral voltage for Phase B
- *  float Uc: Line-neutral voltage for Phase C
- *  float Theta: Grid angle
+ *  const float Ua: Line-neutral voltage for Phase A
+ *  const float Ub: Line-neutral voltage for Phase B
+ *  const float Uc: Line-neutral voltage for Phase C
+ *  const float Theta: Grid angle
  *
  *  float* Ud: Pointer to Ud variable
  *  float* Uq: Pointer to Uq variable
  *
  *  returns: HAL status
  */
-uint8_t transf_abc_to_dq(float Ua, float Ub, float Uc, float Theta, float* Ud, float* Uq){
+uint8_t transf_abc_to_dq(const float Ua, const float Ub, const float Uc, const float Theta, float* Ud, float* Uq){
 	transf_abc_to_alphabeta(Ua, Ub, Uc, &temp1, &temp2);
 	transf_alphabeta_to_dq(temp1, temp2, Theta, Ud, Uq);
 
@@ -283,9 +282,9 @@ uint8_t transf_abc_to_dq(float Ua, float Ub, float Uc, float Theta, float* Ud, f
  * -----------------------------
  *	Transformation for dq to abc (Simplified Inverse Clarke-Park Transformation)
  *
- *  float Ud: Ud value
- *  float Uq: Uq value
- *  float Theta: Grid angle
+ *  const float Ud: Ud value
+ *  const float Uq: Uq value
+ *  const float Theta: Grid angle
  *
  *  float* Ua: Pointer to line-neutral voltage for Phase A
  *  float* Ub: Pointer to line-neutral voltage for Phase B
@@ -293,7 +292,7 @@ uint8_t transf_abc_to_dq(float Ua, float Ub, float Uc, float Theta, float* Ud, f
  *
  *  returns: HAL status
  */
-uint8_t transf_dq_to_abc(float Ud, float Uq, float Theta, float* Ua, float* Ub, float* Uc){
+uint8_t transf_dq_to_abc(const float Ud, const float Uq, const float Theta, float* Ua, float* Ub, float* Uc){
 	transf_dq_to_alphabeta(Ud, Uq, Theta, &temp1, &temp2);
 	transf_alphabeta_to_abc(temp1, temp2, Ua, Ub, Uc);
 

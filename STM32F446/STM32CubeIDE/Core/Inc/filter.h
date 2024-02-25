@@ -12,8 +12,8 @@
 #include "main.h"
 #include "math.h" // For sqrf() function
 
-float exponential_Filter(float alpha, float oldMeas, float newMeas);
-float RMS_Filter(float rmsFilterCoeff, float newMeas, float rmsValue);
+float exponential_Filter(const float alpha, const float oldMeas, const float newMeas);
+float RMS_Filter(const float rmsFilterCoeff, const float newMeas, const float rmsValue);
 
 
 #endif /* INC_FILTER_H_ */

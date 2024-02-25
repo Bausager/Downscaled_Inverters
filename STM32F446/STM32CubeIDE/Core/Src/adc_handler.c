@@ -19,12 +19,12 @@ const uint32_t ADC_channels[16] = {ADC_CHANNEL_0, ADC_CHANNEL_1, ADC_CHANNEL_2, 
  * ------------------------
  *	Used to select the correct ADC channel when measuring on a specific pin
  *
- *	uint8_t ADC_number: Which of the three ADC is needed.
- *	uint8_t Channal: Which channel of the ADC needed.
+ *	const uint8_t ADC_number: Which of the three ADC is needed.
+ *	const uint8_t Channal: Which channel of the ADC needed.
  *
  *	returns: HAL status
  */
-uint8_t ADC_Selector(uint8_t ADC_number, uint8_t Channal){
+uint8_t ADC_Selector(const uint8_t ADC_number, const uint8_t Channal){
 	ADC_ChannelConfTypeDef sConfig = {0};
 	sConfig.Rank = 1;
 	sConfig.SamplingTime = ADC_SAMPLETIME_28CYCLES;
