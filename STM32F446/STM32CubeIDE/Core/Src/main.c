@@ -203,6 +203,7 @@ int main(void)
    */
   LCL_Angle_Compensation(nominal_freq);
   dqPLL_Config(nominal_freq, sample_freq);
+  AlphaBetaPLL_Config(nominal_freq, sample_freq);
 
 
   /*
@@ -231,7 +232,6 @@ int main(void)
    */
   HAL_TIM_Base_Start_IT(&htim1);
   HAL_TIM_Base_Start_IT(&htim2);
-  theta = 0;
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -245,6 +245,7 @@ int main(void)
 	  if (TIM2_falg) {
 		  TIM2_falg = false;
 		  Voltage_Offset();
+		  float temp;
 		  /*
 		   * Measure grid voltages
 		   */
@@ -277,8 +278,9 @@ int main(void)
 		  /*
 		   * Calculate angle from PLL
 		   */
-		  dqPLL(Ua, Ub, Uc, &theta, &Ud);
-
+		   //angle1 = dqPLL(Ua, Ub, Uc, &Ud);
+		   angle1 = AlphaBetaPLL(Ua, Ub, Uc);
+		   temp = angle - angle1;
 
 /*
 		  if(TIM2_flag_acumulator < GridMeasNSamples){
@@ -294,13 +296,12 @@ int main(void)
 		  if (TIM2_flag_acumulator >= sample_freq) {
 			  TIM2_flag_acumulator = 0;
 
-			  transf_abc_to_dq(Ua, Ub, Uc, theta, &Ud, &Uq);
+			  //transf_abc_to_dq(Ua, Ub, Uc, theta, &Ud, &Uq);
 			  //GeneticandRandomSearch(GridMeasNSamples, GridEstiNSamples, GridMeasValues, GridEstiValues);
 
 			  char outputBuffer[256];
-			  angle1 = dqPLL(Ua, Ub, Uc, &theta, &Ud);
 			  //uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.2f. IbRMS: %.2f. IcRMS: %.2f. P: %.2f. Q: %.2f. X: %.2f. R: %.2f. Eg: %.2f. Error: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, GridEstiValues[0].X, GridEstiValues[0].R, GridEstiValues[0].Eg, GridEstiValues[0].Error, angle, theta, residiual_angle);
-			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f. Ud: %0.2f. Uq: %0.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, Pf, angle, angle1, (angle - angle1), Ud, Uq);
+			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f. Ud: %0.2f. Uq: %0.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, Pf, angle, angle1, temp, Ud, Uq);
 			  HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
 
 		  }

@@ -24,17 +24,21 @@ const float Rg = 3.7f * 2.0f;
 /*
  * Helper variables for calculations
  */
-static float temp1;
+static float temp1, temp2;
 
 /*
  * General PLL Variables
  */
-static float angle, natural_angular_frequency, TsCoeff, filterAngleCompensation;
+static float theta, angle, natural_angular_frequency, TsCoeff, filterAngleCompensation;
 
 /*
  * dqPLL variables
  */
 static float dqPLLKp, dqPLLTi, dqPLLnewError, dqPLLoldError, dqPLLoldTheta;
+/*
+ * AlphaBetaPLL variables
+ */
+static float AlphaBetaPLLKp, AlphaBetaPLLTi, AlphaBetaPLLnewError, AlphaBetaPLLoldError, AlphaBetaPLLoldTheta, AlphaBetaPLLUalpha, AlphaBetaPLLUbeta;
 
 /*
  * Function:  LCL_Angle_Compensation
@@ -58,7 +62,7 @@ uint8_t LCL_Angle_Compensation(const float nom_f){
 	float Re = (a1*a2 + b1*b2)/(a2*a2 + b2*b2);
 	float Im = (a2*b1 - a1*b2)/(a2*a2 + b2*b2);
 
-	filterAngleCompensation = atanf(Im/Re);
+	filterAngleCompensation = atanf(Im/Re) / (2.0f*3.1415f);
 
 	return HAL_OK;
 }
@@ -94,7 +98,6 @@ uint8_t dqPLL_Config(const float nom_f, const float sampleFreq){
  *  const float Ub: Line-neutral voltage for Phase B
  *  const float Uc: Line-neutral voltage for Phase C
  *
- *  float* Theta: Pointer to grid angle variable which is integrated upon
  *  float* Ud: Pointer to grid magnitude variable
  *
  *  returns: angle to use in Space-Vector-Modulation, PWM generation or alike.
@@ -110,10 +113,10 @@ uint8_t dqPLL_Config(const float nom_f, const float sampleFreq){
 	url = {https://www.sciencedirect.com/science/article/pii/S1364032118301813},
 	author = {Zunaib Ali and Nicholas Christofides and Lenos Hadjidemetriou and Elias Kyriakides and Yongheng Yang and Frede Blaabjerg}}
  */
-float dqPLL(const float Ua, const float Ub, const float Uc, float* Theta, float* Ud){
+float dqPLL(const float Ua, const float Ub, const float Uc, float* Ud){
 
 	// Transforms it from abc domain to dq, with former angle at the point of measuring.
-	transf_abc_to_dq(Ua, Ub, Uc, *Theta, Ud, &dqPLLnewError);
+	transf_abc_to_dq(Ua, Ub, Uc, theta, Ud, &dqPLLnewError);
 
 	// PI Controller to minimise the "error" (Uq)
 	temp1 = dqPLLKp*(dqPLLnewError) + (dqPLLTi*(dqPLLnewError + dqPLLoldError));
@@ -123,15 +126,16 @@ float dqPLL(const float Ua, const float Ub, const float Uc, float* Theta, float*
 	temp1 += natural_angular_frequency;
 
 	// Integrate over the estimated grid angular frequency to get the angle
-	*Theta +=  (TsCoeff * (temp1 + dqPLLoldTheta));
+	theta +=  (TsCoeff * (temp1 + dqPLLoldTheta));
 
-	if (*Theta > 6.2831853072f) {
-		*Theta -= 6.2831853072f;
+	if (theta > 6.2831853072f) {
+		theta -= 6.2831853072f;
 	}
 	dqPLLoldTheta = temp1;
 
 	// Compensate the angle in the point of measuring with the angle shift from the LCL to get the angle for the PWM generation
-	angle = *Theta + filterAngleCompensation;
+	// Disabled for now
+	angle = theta - filterAngleCompensation;
 	if (angle > 6.2831853072f) {
 		angle -= 6.2831853072f;
 	}else if (angle < 0.0f) {
@@ -140,6 +144,91 @@ float dqPLL(const float Ua, const float Ub, const float Uc, float* Theta, float*
 
 	return angle;
 }
+
+/*
+ * Function:  AlphaBetaPLL_Config
+ * ------------------------
+ *	Configures AlphaBetaPLL internal coefficients and PI controller
+ *
+ *  const float nom_f: Nominal/natural grid frequency
+ *  const float sampleFreq: Sample frequency
+ *
+ *  returns: HAL status
+ *
+ */
+uint8_t AlphaBetaPLL_Config(const float nom_f, const float sampleFreq){
+	natural_angular_frequency = nom_f * 2.0f*3.1415f;
+	TsCoeff = (1.0f/sampleFreq) / 2.0f;
+
+	float settling_time = 4.6f/(0.70710f * nom_f);
+	AlphaBetaPLLKp = 9.2f / settling_time;
+	AlphaBetaPLLTi = ((0.49999f * settling_time * settling_time)/21.16f)/TsCoeff;
+
+	return HAL_OK;
+}
+
+/*
+ * Function:  AlphaBetaPLL
+ * ----------------
+ *	alpha-beta-Phase-Lock-Loop(AlphaBetaPLL) for grid angle estimation and magnitude.
+ *
+ *  const float Ua: Line-neutral voltage for Phase A
+ *  const float Ub: Line-neutral voltage for Phase B
+ *  const float Uc: Line-neutral voltage for Phase C
+ *
+ *  returns: angle to use in Space-Vector-Modulation, PWM generation or alike.
+ *
+ *	@article{ALI2018434,
+	title = {Three-phase phase-locked loop synchronization algorithms for grid-connected renewable energy systems: A review},
+	journal = {Renewable and Sustainable Energy Reviews},
+	volume = {90},
+	pages = {434-452},
+	year = {2018},
+	issn = {1364-0321},
+	doi = {https://doi.org/10.1016/j.rser.2018.03.086},
+	url = {https://www.sciencedirect.com/science/article/pii/S1364032118301813},
+	author = {Zunaib Ali and Nicholas Christofides and Lenos Hadjidemetriou and Elias Kyriakides and Yongheng Yang and Frede Blaabjerg}}
+ */
+float AlphaBetaPLL(const float Ua, const float Ub, const float Uc){
+
+	// Transforms it from abc domain to alpha-beta
+	transf_abc_to_alphabeta(Ua, Ub, Uc, &AlphaBetaPLLUalpha, &AlphaBetaPLLUbeta);
+
+	temp1 = AlphaBetaPLLUalpha / sqrtf((AlphaBetaPLLUalpha*AlphaBetaPLLUalpha) + (AlphaBetaPLLUbeta*AlphaBetaPLLUbeta));
+	temp2 = AlphaBetaPLLUbeta / sqrtf((AlphaBetaPLLUalpha*AlphaBetaPLLUalpha) + (AlphaBetaPLLUbeta*AlphaBetaPLLUbeta));
+
+	temp1 *= sinf(theta);
+	temp2 *= cosf(theta);
+
+	AlphaBetaPLLnewError = temp1 - temp2;
+
+	// PI Controller to minimise the "error" (Uq)
+	temp1 = dqPLLKp*(AlphaBetaPLLnewError) + (AlphaBetaPLLTi*(AlphaBetaPLLnewError + AlphaBetaPLLoldError));
+	AlphaBetaPLLoldError = AlphaBetaPLLnewError;
+
+	// Add the grid angular frequency
+	temp1 += natural_angular_frequency;
+
+	// Integrate over the estimated grid angular frequency to get the angle
+	theta +=  (TsCoeff * (temp1 + AlphaBetaPLLoldTheta));
+
+	if (theta > 6.2831853072f) {
+		theta -= 6.2831853072f;
+	}
+	AlphaBetaPLLoldTheta = temp1;
+
+	// Compensate the angle in the point of measuring with the angle shift from the LCL to get the angle for the PWM generation
+	angle = theta + filterAngleCompensation;
+	if (angle > 6.2831853072f) {
+		angle -= 6.2831853072f;
+	}else if (angle < 0.0f) {
+		angle += 6.2831853072f;
+	}
+
+	return angle;
+}
+
+
 
 
 
