@@ -62,7 +62,7 @@ uint8_t LCL_Angle_Compensation(const float nom_f){
 	float Re = (a1*a2 + b1*b2)/(a2*a2 + b2*b2);
 	float Im = (a2*b1 - a1*b2)/(a2*a2 + b2*b2);
 
-	filterAngleCompensation = atanf(Im/Re) / (2.0f*3.1415f);
+	filterAngleCompensation = (atanf(Im/Re) / (2.0f*3.1415f));
 
 	return HAL_OK;
 }
@@ -218,7 +218,7 @@ float AlphaBetaPLL(const float Ua, const float Ub, const float Uc){
 	AlphaBetaPLLoldTheta = temp1;
 
 	// Compensate the angle in the point of measuring with the angle shift from the LCL to get the angle for the PWM generation
-	angle = theta + filterAngleCompensation;
+	angle = theta - filterAngleCompensation;
 	if (angle > 6.2831853072f) {
 		angle -= 6.2831853072f;
 	}else if (angle < 0.0f) {

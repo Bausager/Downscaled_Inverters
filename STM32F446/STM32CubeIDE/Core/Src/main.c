@@ -245,7 +245,7 @@ int main(void)
 	  if (TIM2_falg) {
 		  TIM2_falg = false;
 		  Voltage_Offset();
-		  float temp;
+
 		  /*
 		   * Measure grid voltages
 		   */
@@ -278,9 +278,10 @@ int main(void)
 		  /*
 		   * Calculate angle from PLL
 		   */
-		   //angle1 = dqPLL(Ua, Ub, Uc, &Ud);
-		   angle1 = AlphaBetaPLL(Ua, Ub, Uc);
-		   temp = angle - angle1;
+		  float temp;
+		  //angle1 = dqPLL(Ua, Ub, Uc, &Ud);
+		  angle1 = AlphaBetaPLL(Ua, Ub, Uc);
+		  temp = angle - angle1;
 
 /*
 		  if(TIM2_flag_acumulator < GridMeasNSamples){
