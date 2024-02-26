@@ -47,4 +47,4 @@ He also has students doing their project and bachelor thesis helping expand on t
 
 A contributor [Christian Lind Vie Madsen](https://www.linkedin.com/in/christian-karl-oscar-lind-vie-madsen-11606a9b/) helps optimising written code for better performance.
 
-Owner of project- Me! [Michelle Bausager](https://www.linkedin.com/in/michelle-bausager/) A former student and research assistance at AU who likes to work with all aspects of inverters.
+And project maintainer- Me! [Michelle Bausager](https://www.linkedin.com/in/michelle-bausager/) A former student and research assistance at AU who likes to work with all aspects of inverters.
