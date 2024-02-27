@@ -48,3 +48,24 @@ He also has students doing their project and bachelor thesis helping expand on t
 A contributor [Christian Lind Vie Madsen](https://www.linkedin.com/in/christian-karl-oscar-lind-vie-madsen-11606a9b/) helps optimising written code for better performance.
 
 And project maintainer- Me! [Michelle Bausager](https://www.linkedin.com/in/michelle-bausager/) A former student and research assistance at AU who likes to work with all aspects of inverters.
+
+## Git Workflow.
+For students or others who want to contribute, a workflow is needed to make sure everything still works in the end.
+main.c on the main branch is written in such a way that every function is implementet but commented out.
+This means there's a funtional implementation of every feature avaliable ready to use.
+
+To make sure the workflow is allined a smal guide it here presented;
+Firstly make sure you have been invited to be a contributor.
+Then starting working on a new feature first pull from the main branch
+'''bash
+git pull origin main
+'''
+
+
+
+
+
+
+
+
+
