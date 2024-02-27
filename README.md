@@ -55,11 +55,93 @@ main.c on the main branch is written in such a way that every function is implem
 This means there's a funtional implementation of every feature avaliable ready to use.
 
 To make sure the workflow is allined a smal guide it here presented;
+### Download the repository and work on an existing branch
+Create of find a folder for the Git project and open your terminal in that folder.
+Grab the git link and use the following git commands to download the project
+```
+git clone https://github.com/Bausager/Git_Tutorial.git
+```
+It’s good practice to get an overview of the project, especially the branches.
+It's also here you would start if you come back to code some more!
+```
+git pull
+git branch -a
+```
+If there’s probably a need to code in a specific branch, if you're not in the right branc you need to select it from the list. 
+Now you need to update it localy as follows
+```
+git checkout specific_branch
+git pull origin specific_branch
+```
+You can now start to make changes to the code!
+To commit it, firstly you need to make sure the branch is up to date.
+Then the "git add -A" commits all files and now you have to write some comments on the changes you made
+Now you can push it to git!
+```
+git pull
+git add -A
+git commit -m "Head line for changes
+>
+>
+> Discription of what has been done "
+git push
+```
+
+### Make a new branch
 Firstly make sure you have been invited to be a contributor.
 Then starting working on a new feature first pull from the main branch
 ```
 git pull origin main
-´´´
+```
+Now you need to create a new branch where you can make your new implementations. Remember to give it a valuable name, such as "UltraCoolNewPLL".
+After creating it you need to be in ýour new branch, with the opteration "checkout".
+```
+git branch new_branch
+git checkout new_branch
+```
+You can now start to make changes to the code!
+Since it's a new branch you don't need to make sure it's already updated as you do after you've commitet the branch for the first time.
+Then the "git add -A" commits all files and now you have to write some comments on the changes you made.
+```
+git add -A
+git commit -m "Head line for changes
+>
+>
+> Discription of what has been done "
+```
+First time pushing a new branch you need to push it like this
+```
+git push -u origin new_branch
+```
+After that you can simply go to the *Workflow on specific branch*
+
+### Work on an exiting branch
+Firstly you need to update the project and see what branch you're on
+```
+git pull
+git branch -a
+```
+If you're not on the right branch you need to switch to it as follow;
+```
+git checkout your_working_branch
+git pull origin your_working_branch
+```
+You can now start to make changes to the code!
+To commit it, firstly you need to make sure the branch is up to date.
+Then the "git add -A" commits all files and now you have to write some comments on the changes you made
+Now you can push it to git!
+```
+git pull
+git add -A
+git commit -m "Head line for changes
+>
+>
+> Discription of what has been done "
+git push
+```
+
+### Marge branch to main
+
 
 
 
