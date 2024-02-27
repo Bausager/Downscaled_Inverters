@@ -118,7 +118,29 @@ After that you can simply go to the workflow presented in *Download the reposito
 
 ### Marge branch to main
 When the feature is done and tested, it's time to merge with the main branch.
-I 
+This is the time and place where everything can go wrong!
+Make sure main.c is steamlined like seen in the current main.c.
+We're trying to implement every feature just outcommedted, that means you can just outcomment the feature to make it work.
+At least that is what we're trying to do, to have a good example for the implementation for others to look at.
+When we merge we need to be on the main branch.
+```
+git checkout main
+git pull origin main
+```
+Now we can merge the branch into the main branch.
+```
+git merge new_branch
+git push origin main
+```
+Now we’re ready to delete our branch. First we see what branches are merged, just to make sure we’re
+deleting the right one. Then we delete the local branch and then the remote branch we associated with the
+remote repository.
+```
+git branch --merged
+git branch -d new_branch
+git push origin --delete new_branch
+```
+And now it's done.
 
 
 
