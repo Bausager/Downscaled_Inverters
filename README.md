@@ -55,6 +55,7 @@ main.c on the main branch is written in such a way that every function is implem
 This means there's a funtional implementation of every feature avaliable ready to use.
 
 To make sure the workflow is allined a smal guide it here presented;
+
 ### Download the repository and work on an existing branch
 Create of find a folder for the Git project and open your terminal in that folder.
 Grab the git link and use the following git commands to download the project
@@ -67,8 +68,8 @@ It's also here you would start if you come back to code some more!
 git pull
 git branch -a
 ```
-If there’s probably a need to code in a specific branch, if you're not in the right branc you need to select it from the list. 
-Now you need to update it localy as follows
+There’s probably a need to code in a specific branch, if you're not in the right branch you need to select it from the list. 
+Now you need to update it localy as follows:
 ```
 git checkout specific_branch
 git pull origin specific_branch
@@ -78,13 +79,13 @@ To commit it, firstly you need to make sure the branch is up to date.
 Then the "git add -A" commits all files and now you have to write some comments on the changes you made
 Now you can push it to git!
 ```
-git pull
+git pull origin specific_branch
 git add -A
 git commit -m "Head line for changes
 >
 >
 > Discription of what has been done "
-git push
+git push origin specific_branch
 ```
 
 ### Make a new branch
@@ -113,34 +114,11 @@ First time pushing a new branch you need to push it like this
 ```
 git push -u origin new_branch
 ```
-After that you can simply go to the *Workflow on specific branch*
-
-### Work on an exiting branch
-Firstly you need to update the project and see what branch you're on
-```
-git pull
-git branch -a
-```
-If you're not on the right branch you need to switch to it as follow;
-```
-git checkout your_working_branch
-git pull origin your_working_branch
-```
-You can now start to make changes to the code!
-To commit it, firstly you need to make sure the branch is up to date.
-Then the "git add -A" commits all files and now you have to write some comments on the changes you made
-Now you can push it to git!
-```
-git pull
-git add -A
-git commit -m "Head line for changes
->
->
-> Discription of what has been done "
-git push
-```
+After that you can simply go to the workflow presented in *Download the repository and work on an existing branch*
 
 ### Marge branch to main
+When the feature is done and tested, it's time to merge with the main branch.
+I 
 
 
 
