@@ -57,9 +57,9 @@ This means there's a funtional implementation of every feature avaliable ready t
 To make sure the workflow is allined a smal guide it here presented;
 Firstly make sure you have been invited to be a contributor.
 Then starting working on a new feature first pull from the main branch
-'''
+```
 git pull origin main
-'''
+´´´
 
 
 
