@@ -60,7 +60,7 @@ To make sure the workflow is allined a smal guide it here presented;
 Create of find a folder for the Git project and open your terminal in that folder.
 Grab the git link and use the following git commands to download the project
 ```
-git clone https://github.com/Bausager/Git_Tutorial.git
+git clone https://github.com/Bausager/Downscaled_Inverters.git
 ```
 It’s good practice to get an overview of the project, especially the branches.
 It's also here you would start if you come back to code some more!
