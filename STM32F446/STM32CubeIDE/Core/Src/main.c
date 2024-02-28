@@ -65,7 +65,7 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 // Switching- , Nominal grid - and Sample frequency
-const float f_sw = 20e3 * 2.0f; // 20kHz for every interrupt * 2 for the whole period (40kHz switching)
+const float f_sw = 30e3 * 2.0f; // 20kHz for every interrupt * 2 for the whole period (40kHz switching)
 const float nominal_freq = 50.0f;
 const float sample_freq = 5e3;
 
@@ -77,7 +77,7 @@ uint32_t TIM2_flag_acumulator = 0; // Helper for TIM2_falg
 const float RADIAL_SPEED = (nominal_freq * PI2) / f_sw;
 
 // Modulation index, PWM and angle variables for SVM
-float Mi = 0.6f;
+float Mi = 0.9f;
 float PWM1, PWM2, PWM3;
 float angle = 0;
 // Theta and angle is for the PLL. Theta is the angle from the measurement, angle1 is the angle before the LCL filter.
@@ -548,7 +548,7 @@ static void MX_TIM1_Init(void)
   /* USER CODE END TIM1_Init 1 */
   htim1.Instance = TIM1;
   htim1.Init.Prescaler = 0;
-  htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED3;
+  htim1.Init.CounterMode = TIM_COUNTERMODE_CENTERALIGNED1;
   htim1.Init.Period = 65535;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
@@ -597,7 +597,7 @@ static void MX_TIM1_Init(void)
   sBreakDeadTimeConfig.OffStateRunMode = TIM_OSSR_DISABLE;
   sBreakDeadTimeConfig.OffStateIDLEMode = TIM_OSSI_DISABLE;
   sBreakDeadTimeConfig.LockLevel = TIM_LOCKLEVEL_OFF;
-  sBreakDeadTimeConfig.DeadTime = 25;
+  sBreakDeadTimeConfig.DeadTime = 5;
   sBreakDeadTimeConfig.BreakState = TIM_BREAK_DISABLE;
   sBreakDeadTimeConfig.BreakPolarity = TIM_BREAKPOLARITY_HIGH;
   sBreakDeadTimeConfig.AutomaticOutput = TIM_AUTOMATICOUTPUT_DISABLE;
