@@ -34,7 +34,7 @@
 uint8_t svm_block_init(const uint32_t AutoReloadRegister, const float T_sw);
 uint8_t svm_block(const float modulation_idx, const float angle_rad, float* tim_1, float* tim_2, float* tim_3);
 
-
+float Ud_to_Mi(float DCLinkVoltage, float Ud);
 
 
 #endif /* INC_INVERTER_H_ */

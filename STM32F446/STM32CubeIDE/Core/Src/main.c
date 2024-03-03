@@ -27,6 +27,8 @@
 #include "measCalc.h" // Calculating various values.
 #include "PLL.h" // PLL algorithms
 #include "GridEstimation.h" // Grid estimation algorithm
+#include "control.h" // For control
+#include "misc.h" // For micalanius functons
 
 
 
@@ -65,24 +67,22 @@ UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN PV */
 // Switching- , Nominal grid - and Sample frequency
-const float f_sw = 30e3 * 2.0f; // 20kHz for every interrupt * 2 for the whole period (40kHz switching)
-const float nominal_freq = 50.0f;
-const float sample_freq = 5e3;
+const float f_sw = 20e3 * 2.0f; // 20kHz for every interrupt * 2 for the whole period (20kHz switching)
+const float nominal_freq = 50.0f; // Nominal grid frequency
+float angular_nominal_freq = nominal_freq *2.0f * 3.1415f; // Nominal angular grid frequency (This variable is used to inject grid changes)
+const float sample_freq = 5e3; // Sample frequency
 
 // Flags
-bool TIM2_falg = false; // Flag for TIM2 (increases with sample_freq)
-uint32_t TIM2_flag_acumulator = 0; // Helper for TIM2_falg
+bool TIM2_falg = false; // Flag for TIM2
+uint32_t TIM2_flag_acumulator = 0; // Helper for TIM2_falg (increases with every sample interrupt and resets when it hits: sample_freq)
 
-// Radial speed for Grid Forming
-const float RADIAL_SPEED = (nominal_freq * PI2) / f_sw;
+// Control variables
+float Pref, Qref, angular_freq_ref, Udref;
+
 
 // Modulation index, PWM and angle variables for SVM
-float Mi = 0.9f;
+float Mi, angle;
 float PWM1, PWM2, PWM3;
-float angle = 0;
-// Theta and angle is for the PLL. Theta is the angle from the measurement, angle1 is the angle before the LCL filter.
-float theta = 0;
-float angle1 = 0;
 
 // Voltage variables
 float Uab, Ubc, Uca;
@@ -111,7 +111,6 @@ float Offset, DCLink;
 // Grid Estimation
 struct GridEstiMeas GridMeasValues[GridMeasNSamples]; // Stored measured samples for grid estimation
 struct GridEstiVari GridEstiValues[GridEstiNSamples]; // Stored estimated samples for grid estimation
-
 
 /* USER CODE END PV */
 
@@ -193,23 +192,9 @@ int main(void)
   TIM_freq(2, sample_freq);
 
   /*
-   * Initialise SVM with timer information
+   * Initialise SVM with timer information and interrupt frequency
    */
   svm_block_init(TIM1->ARR, f_sw);
-
-
-  /*
-   * Initialise PLL
-   */
-  LCL_Angle_Compensation(nominal_freq);
-  dqPLL_Config(nominal_freq, sample_freq);
-  AlphaBetaPLL_Config(nominal_freq, sample_freq);
-
-
-  /*
-   * Initialise Grid estimation variables
-   */
-  InitiliseGridStruct(GridEstiNSamples, GridEstiValues);
 
   /*
    *  Set filter coefficients for measurements
@@ -218,6 +203,37 @@ int main(void)
   Current_Filter_Length(0); // Set current measuring filter length
   Power_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set power calculation filter length to 10 periods of nominal_freq
   RMS_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set RMS filter length to 10 periods of nominal_freq
+
+  /*
+   * Initialise Grid estimation variables
+   */
+  InitiliseGridStruct(GridEstiNSamples, GridEstiValues);
+
+
+  /*
+   * Initialise Droop
+   */
+  Droop_Config(25.0f, 25.0f, f_sw);
+  Udref = 1.9f; // 1.9V*sqrt(3) = 3.3Vpp Line-line voltage
+  Pref = 0.05f; // Active Power reference for Droop control
+  Qref = 0.0f; // Reactive Power reference for Droop control
+  angular_freq_ref = angular_nominal_freq; // angular grid frequency reference for Droop control
+
+
+  /*
+   * Initialisation for Grid Following
+   */
+  LCL_Angle_Compensation(nominal_freq);
+  dqPLL_Config(nominal_freq, sample_freq);
+  AlphaBetaPLL_Config(nominal_freq, sample_freq);
+
+  /*
+   * Initialisation for Grid Forming
+   */
+
+
+
+
 
   /*
    * Initial measurement for ADC Offset (is a must!) and DC Link voltage
@@ -244,6 +260,8 @@ int main(void)
 	   */
 	  if (TIM2_falg) {
 		  TIM2_falg = false;
+
+		  // Updates DC link voltage slow
 		  Voltage_Offset();
 
 		  /*
@@ -254,9 +272,6 @@ int main(void)
 		  Uca = meas_Uca(Uca);
 		  // Re-calculate phase-phase voltages to phase-neutral voltages
 		  calc_Uxx_to_Uxn(Uab, Ubc, Uca, &Ua, &Ub, &Uc);
-		  // Calculate the Voltage RMS values
-		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
-		  calc_RMS(Uab, Ubc, Uca, &UabRMS, &UbcRMS, &UcaRMS);
 
 		  /*
 		   * Measure grid currents
@@ -264,24 +279,17 @@ int main(void)
 		  Ia = meas_Ia(Ia);
 		  Ib = meas_Ib(Ib);
 		  Ic = meas_Ic(Ic);
-		  // Calculate the Current RMS values
-		  calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
-
-		  /*
-		   * Calculate inverter power
-		   */
+		  // Calculating the Power
 		  calc_Instantaneous_Power(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
-		  Pf = calc_Power_Factor(P, Q);
+
+
+		  // Calculate the Voltage RMS values
+		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
+		  calc_RMS(Uab, Ubc, Uca, &UabRMS, &UbcRMS, &UcaRMS);
 		  // Calculate the Current RMS values
 		  calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
-
-		  /*
-		   * Calculate angle from PLL
-		   */
-		  float temp;
-		  //angle1 = dqPLL(Ua, Ub, Uc, &Ud);
-		  angle1 = AlphaBetaPLL(Ua, Ub, Uc);
-		  temp = angle - angle1;
+		  // Calculating Power Factor
+		  Pf = calc_Power_Factor(P, Q);
 
 /*
 		  if(TIM2_flag_acumulator < GridMeasNSamples){
@@ -297,12 +305,12 @@ int main(void)
 		  if (TIM2_flag_acumulator >= sample_freq) {
 			  TIM2_flag_acumulator = 0;
 
-			  //transf_abc_to_dq(Ua, Ub, Uc, theta, &Ud, &Uq);
+			  //transf_abc_to_dq(Ua, Ub, Uc, angle1, &Ud, &Uq);
 			  //GeneticandRandomSearch(GridMeasNSamples, GridEstiNSamples, GridMeasValues, GridEstiValues);
 
 			  char outputBuffer[256];
 			  //uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.2f. IbRMS: %.2f. IcRMS: %.2f. P: %.2f. Q: %.2f. X: %.2f. R: %.2f. Eg: %.2f. Error: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, GridEstiValues[0].X, GridEstiValues[0].R, GridEstiValues[0].Eg, GridEstiValues[0].Error, angle, theta, residiual_angle);
-			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. PLL angle: %.2f. Angle Error: %.2f. Ud: %0.2f. Uq: %0.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, Pf, angle, angle1, temp, Ud, Uq);
+			  uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "UaRMS: %.2f. UbRMS: %.2f. UcRMS: %.2f. IaRMS: %.3f. IbRMS: %.3f. IcRMS: %.3f. P: %.4f. Q: %.4f. PF: %.2f. SVM angle: %.2f. Ud: %0.2f. Uq: %0.2f.\r\n", UaRMS, UbRMS, UcRMS, IaRMS, IbRMS, IcRMS, P, Q, Pf, angle, Ud, Uq);
 			  HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
 
 		  }
@@ -731,24 +739,35 @@ static void MX_GPIO_Init(void)
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 
 	if(htim->Instance==TIM1){
-		/*
-		 * Calculating SVM PWM
-		 */
-		angle = angle + RADIAL_SPEED;
-	    if (angle > 6.2831853072f){
-	    	angle = angle - 6.2831853072f;
-	    }
-	    svm_block(Mi, angle, &PWM1, &PWM2, &PWM3);
 
+
+		/*
+		 * Grid Forming
+		 */
+		Droop_Forming_Resistive(P, Q, Pref, Qref, angular_nominal_freq, Udref, &angle, &Ud);
+		Mi = Ud_to_Mi(DCLink, Ud);
+
+		/*
+		 * Grid Following
+		 */
+		//angle = dqPLL(Ua, Ub, Uc, &Ud);
+		//angle = AlphaBetaPLL(Ua, Ub, Uc);
+
+
+	    svm_block(Mi, angle, &PWM1, &PWM2, &PWM3);
 	    TIM1->CCR1 = PWM1;
 	    TIM1->CCR2 = PWM2;
 	    TIM1->CCR3 = PWM3;
+
 	}
 
 	if(htim->Instance==TIM2){
 		/*
 		 * TIM2_falg to use in main-loop so it doesn't clog up the SVM.
 		 */
+		//char outputBuffer[256];
+		//uint8_t len = snprintf(outputBuffer, sizeof(outputBuffer), "P: %.4f. Q: %.4f. Ud: %0.2f. Uq: %0.2f. Mi: %0.2f.\r\n", P, Q, Ud, Uq, Mi);
+		//HAL_UART_Transmit(&huart2, (uint8_t *)outputBuffer, len, 100);
 		TIM2_falg = true;
 	}
 }

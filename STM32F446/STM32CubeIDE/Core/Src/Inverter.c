@@ -59,9 +59,11 @@ uint8_t svm_block_init(const uint32_t AutoReloadRegister, const float Freq){
  */
 uint8_t svm_block(const float modulation_idx, const float angle_rad, float* tim_1, float* tim_2, float* tim_3){
 
-	float svm_angle = angle_rad - (floorf(angle_rad/FULL_CIRCLE)*FULL_CIRCLE);
-	float svm_angle_in_sector = svm_angle - (floorf(svm_angle/SECTOR)*SECTOR);
-	float svm_sector =  floorf(svm_angle/SECTOR);
+	static float svm_angle, svm_angle_in_sector, svm_sector, t_a, t_b, t_0, t_1, t_2, t_3;
+
+	svm_angle = angle_rad - (floorf(angle_rad/FULL_CIRCLE)*FULL_CIRCLE);
+	svm_angle_in_sector = svm_angle - (floorf(svm_angle/SECTOR)*SECTOR);
+	svm_sector =  floorf(svm_angle/SECTOR);
 
 
     if ((svm_sector == 1 ) || (svm_sector == 3) || (svm_sector == 5))
@@ -71,14 +73,13 @@ uint8_t svm_block(const float modulation_idx, const float angle_rad, float* tim_
 
     //float t_a = svm_scaling * modulation_idx * svm_T_sw * sinf((PI_THIRDS - svm_angle_in_sector));
     //float t_b = svm_scaling * modulation_idx * svm_T_sw * sinf(svm_angle_in_sector);
-    float t_a = 1.1026577f * modulation_idx * svm_T_sw * sinf((PI_THIRDS - svm_angle_in_sector));
-    float t_b = 1.1026577f * modulation_idx * svm_T_sw * sinf(svm_angle_in_sector);
+    t_a = 1.1026577f * modulation_idx * svm_T_sw * sinf((PI_THIRDS - svm_angle_in_sector));
+    t_b = 1.1026577f * modulation_idx * svm_T_sw * sinf(svm_angle_in_sector);
 
     // Third harmonic injection
-    float t_0 = svm_T_sw*0.5f*(1.0f - ((1.2732395447f*modulation_idx*(cosf(svm_angle_in_sector)) - (0.1666666667f*cosf(3.0f*svm_angle_in_sector)))));
+    t_0 = svm_T_sw*0.5f*(1.0f - ((1.2732395447f*modulation_idx*(cosf(svm_angle_in_sector)) - (0.1666666667f*cosf(3.0f*svm_angle_in_sector)))));
     // float t_7 = T_sw - t_a - t_b - t_0;
 
-	float t_1, t_2, t_3;
     if(svm_angle < sector0_angle) //sector 0 - state 4
     {    // sector0 => pwma = t0, pwmb = ta, pwmc = tb
         t_1 = t_0;
@@ -150,6 +151,16 @@ uint8_t svm_block(const float modulation_idx, const float angle_rad, float* tim_
 }
 
 
+float Ud_to_Mi(float DCLinkVoltage, float Ud){
+	static float Mi;
+	Mi = (Ud * 1.73205f)/DCLinkVoltage;
+    if (Mi > 0.9f){
+    	Mi = 0.9f;
+    }else if(Mi < 0.0f){
+    	Mi = 0.0f;
+    }
+    return Mi;
+}
 
 
 
