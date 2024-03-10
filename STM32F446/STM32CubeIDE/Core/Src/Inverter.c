@@ -153,7 +153,7 @@ uint8_t svm_block(const float modulation_idx, const float angle_rad, float* tim_
 
 float Ud_to_Mi(float DCLinkVoltage, float Ud){
 	static float Mi;
-	Mi = (Ud * 1.73205f)/DCLinkVoltage;
+	Mi = (Ud)/(DCLinkVoltage * 0.5f);
     if (Mi > 0.9f){
     	Mi = 0.9f;
     }else if(Mi < 0.0f){

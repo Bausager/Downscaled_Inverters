@@ -103,6 +103,7 @@ float P, Q, S, Pf;
 
 // Offset voltage for ADC and DC-Link voltage
 float Offset, DCLink;
+float temp;
 
 // Length of arrays
 #define GridMeasNSamples 10 // Amount of stored measured samples for grid estimation
@@ -199,7 +200,7 @@ int main(void)
   /*
    *  Set filter coefficients for measurements
    */
-  Voltage_Filter_Length(0); // Set voltage measuring filter length
+  Voltage_Filter_Length(5); // Set voltage measuring filter length
   Current_Filter_Length(0); // Set current measuring filter length
   Power_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set power calculation filter length to 10 periods of nominal_freq
   RMS_Filter_Length((uint32_t)((sample_freq/nominal_freq)*10.0f)); // Set RMS filter length to 10 periods of nominal_freq
@@ -214,7 +215,7 @@ int main(void)
    * Initialise Droop
    */
   Droop_Config(25.0f, 25.0f, f_sw);
-  Udref = 1.9f; // 1.9V*sqrt(3) = 3.3Vpp Line-line voltage
+  Udref = 1.9f; // 1.9V*sqrt(3) = 3.3Vpp Line-line voltage // Ud measured from Line-Neutral. Making Ud peak line-neutral
   Pref = 0.05f; // Active Power reference for Droop control
   Qref = 0.0f; // Reactive Power reference for Droop control
   angular_freq_ref = angular_nominal_freq; // angular grid frequency reference for Droop control
@@ -273,23 +274,24 @@ int main(void)
 		  // Re-calculate phase-phase voltages to phase-neutral voltages
 		  calc_Uxx_to_Uxn(Uab, Ubc, Uca, &Ua, &Ub, &Uc);
 
+
 		  /*
 		   * Measure grid currents
 		   */
 		  Ia = meas_Ia(Ia);
 		  Ib = meas_Ib(Ib);
-		  Ic = meas_Ic(Ic);
+		  //Ic = meas_Ic(Ic);
 		  // Calculating the Power
 		  calc_Instantaneous_Power(Ua, Ub, Uc, Ia, Ib, Ic, &P, &Q);
 
 
 		  // Calculate the Voltage RMS values
-		  calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
-		  calc_RMS(Uab, Ubc, Uca, &UabRMS, &UbcRMS, &UcaRMS);
+		  //calc_RMS(Ua, Ub, Uc, &UaRMS, &UbRMS, &UcRMS);
+		  //calc_RMS(Uab, Ubc, Uca, &UabRMS, &UbcRMS, &UcaRMS);
 		  // Calculate the Current RMS values
-		  calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
+		  //calc_RMS(Ia, Ib, Ic, &IaRMS, &IbRMS, &IcRMS);
 		  // Calculating Power Factor
-		  Pf = calc_Power_Factor(P, Q);
+		  //Pf = calc_Power_Factor(P, Q);
 
 /*
 		  if(TIM2_flag_acumulator < GridMeasNSamples){
@@ -305,7 +307,7 @@ int main(void)
 		  if (TIM2_flag_acumulator >= sample_freq) {
 			  TIM2_flag_acumulator = 0;
 
-			  //transf_abc_to_dq(Ua, Ub, Uc, angle1, &Ud, &Uq);
+			  //transf_abc_to_dq(Ua, Ub, Uc, angle, &temp, &Uq);
 			  //GeneticandRandomSearch(GridMeasNSamples, GridEstiNSamples, GridMeasValues, GridEstiValues);
 
 			  char outputBuffer[256];
@@ -746,7 +748,6 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef* htim){
 		 */
 		Droop_Forming_Resistive(P, Q, Pref, Qref, angular_nominal_freq, Udref, &angle, &Ud);
 		Mi = Ud_to_Mi(DCLink, Ud);
-
 		/*
 		 * Grid Following
 		 */
